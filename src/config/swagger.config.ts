@@ -5,7 +5,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 const swaggerConfig = (app: INestApplication) => {
     const config = new DocumentBuilder()
         .setTitle('Document APIs')
-        .setDescription('Test API description')
+        .setDescription('Test API description for HomeHola')
         .setVersion('1.0.0')
         .addBearerAuth(
             {

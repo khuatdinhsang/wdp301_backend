@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { BaseResponse } from './baseResponse.dto';
+import { BaseResponse } from './BaseResponse.dto';
 
 export class ResponseDataDTO<T> extends BaseResponse {
     data: T;

@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from './modules/auth/auth.module';
 @Module({
   imports: [ConfigModule.forRoot({
     envFilePath: '.env',
@@ -13,6 +14,7 @@ import { MongooseModule } from '@nestjs/mongoose';
       uri: 'mongodb://0.0.0.0:27017/wdp301',
     }),
   }),
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],
