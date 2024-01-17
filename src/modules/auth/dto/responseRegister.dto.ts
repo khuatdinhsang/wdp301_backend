@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../schemas/user.schemas';
-import { BaseResponse } from 'src/common/BaseResponse.dto';
+import { BaseResponse } from 'src/common/dto/BaseResponse.dto';
 
 export class ResponseRegister extends BaseResponse {
     @ApiProperty({ example: null, type: () => User })

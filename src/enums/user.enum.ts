@@ -7,5 +7,7 @@ export enum UserMessage {
     registerSuccess = "Register successfully",
     loginSuccess = "Login successfully",
     phoneNotExist = "Phone number does not exist",
-    passwordInValid = "Password is invalid"
+    passwordInValid = "Password is invalid",
+    refreshTokenSuccess = " Refresh token  successfully",
+    refreshTokenUnauthorized = 'Refresh Token UnAuthorized.',
 }

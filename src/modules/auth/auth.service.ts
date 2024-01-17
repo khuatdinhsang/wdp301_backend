@@ -5,9 +5,10 @@ import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './schemas/user.schemas';
 import * as bcrypt from 'bcrypt'
-import { JwtEnum, UserMessage } from 'src/enums';
-import { LoginDTO, dataTypeLogin, registerDTO } from './dto';
+import { HttpEnum, JwtEnum, UserMessage } from 'src/enums';
+import { LoginDTO, dataTypeLogin, refreshTokenDTO, registerDTO } from './dto';
 import { JwtPayload, Tokens } from './types';
+import { Jwt } from 'src/common/jwt';
 @Injectable({})
 export class AuthService {
 
@@ -51,6 +52,20 @@ export class AuthService {
         const payload = { id: userExist._id.toString(), fullName: userExist.fullName };
         const tokens = await this.getTokens(payload)
         await this.userModel.findByIdAndUpdate(userExist._id, { $set: { refreshToken: tokens.refreshToken } }, { new: true })
+        return tokens
+    }
+    async refreshToken(data: refreshTokenDTO): Promise<Tokens> {
+        const payload = Jwt.getPayloadToken(data.refreshToken);
+        const user = await this.userModel.findById(payload.id)
+        if (!user) throw Error(HttpEnum.internalServerError);
+
+        if (user.refreshToken !== data.refreshToken)
+            throw new Error(UserMessage.refreshTokenUnauthorized);
+        const tokens = await this.getTokens({
+            id: user.id,
+            fullName: user.fullName,
+        });
+        await this.userModel.findByIdAndUpdate(user._id, { $set: { refreshToken: tokens.refreshToken } }, { new: true })
         return tokens
     }
     async getTokens(payload: JwtPayload): Promise<Tokens> {
