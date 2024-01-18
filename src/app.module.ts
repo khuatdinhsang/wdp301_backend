@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './modules/auth/auth.module';
+import { BlogModule } from './modules/blog/blog.modules';
 @Module({
   imports: [ConfigModule.forRoot({
     envFilePath: '.env',
@@ -14,7 +15,8 @@ import { AuthModule } from './modules/auth/auth.module';
       uri: 'mongodb://0.0.0.0:27017/wdp301',
     }),
   }),
-    AuthModule
+    AuthModule,
+    BlogModule
   ],
   controllers: [AppController],
   providers: [AppService],
