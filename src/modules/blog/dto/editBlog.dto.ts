@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsNumber, IsString, IsArray, IsOptional } from "class-validator";
-import { BlogMessage, CategoryRoom, HasTagRoom, RentalObject } from "src/enums";
+import { BlogMessage, CategoryRoom, RentalObject } from "src/enums";
 export class editBlogDTO {
     @ApiProperty({
         example: CategoryRoom.RENT,
@@ -9,13 +9,6 @@ export class editBlogDTO {
     @IsOptional()
     @IsEnum(CategoryRoom, { message: BlogMessage.categoryInValid })
     category: CategoryRoom
-
-    @ApiProperty({
-        example: HasTagRoom.RENT,
-    })
-    @IsOptional()
-    @IsEnum(HasTagRoom, { message: BlogMessage.HasTagInValid })
-    hasTag: HasTagRoom;
 
     @ApiProperty({
         example: 'title...',
