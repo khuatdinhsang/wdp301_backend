@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum, IsNotEmpty, IsNumber, IsString, IsArray, IsBoolean, IsDateString } from "class-validator";
-import { BlogMessage, CategoryRoom, HasTagRoom, RentalObject } from "src/enums";
+import { IsEnum, IsNotEmpty, IsNumber, IsString, IsArray, IsDateString } from "class-validator";
+import { BlogMessage, CategoryRoom, RentalObject } from "src/enums";
 export class createBlogDTO {
     @ApiProperty({
         example: CategoryRoom.RENT,
@@ -9,13 +9,6 @@ export class createBlogDTO {
     @IsEnum(CategoryRoom, { message: BlogMessage.categoryInValid })
     @IsNotEmpty()
     category: CategoryRoom
-
-    @ApiProperty({
-        example: HasTagRoom.RENT,
-    })
-    @IsEnum(HasTagRoom, { message: BlogMessage.HasTagInValid })
-    @IsNotEmpty()
-    hasTag: HasTagRoom;
 
     @ApiProperty({
         example: 'title...',
@@ -74,33 +67,9 @@ export class createBlogDTO {
     })
     @IsEnum(RentalObject, { message: BlogMessage.RentalObjectInValid })
     rentalObject: RentalObject;
-
-    @ApiProperty({
-        example: true,
-    })
-    @IsBoolean()
-    isAccepted: boolean;
-
     @ApiProperty({
         example: '2024-09-23',
     })
     @IsDateString()
     expiredTime: Date;
-
-    @ApiProperty({
-        example: false,
-    })
-    @IsBoolean()
-    isHide: boolean;
-
-    @ApiProperty({
-        example: false,
-    })
-    @IsBoolean()
-    isRented: boolean;
-    @ApiProperty({
-        example: 4,
-    })
-    @IsNumber()
-    star: number;
 }
