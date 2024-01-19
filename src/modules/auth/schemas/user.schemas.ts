@@ -34,7 +34,7 @@ export class User {
     @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Blog' }] })
     blogsPost: Blog[]
     @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Blog' }] })
-    blogsFavourite: Blog[]
+    blogsFavorite: Blog[]
     @Prop({ type: String, required: true })
     role: UserRole
 }

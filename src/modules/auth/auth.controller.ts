@@ -3,10 +3,12 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from "@n
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
-import { LoginDTO, ResponseRegister, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken } from "./dto";
+import { LoginDTO, ResponseRegister, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog } from "./dto";
 import { CurrentUser } from "./decorator/user.decorator";
 import { User } from "./schemas/user.schemas";
 import { AuthGuard } from "./auth.guard";
+import { JwtDecode } from "./types";
+import { detailBlogDTO } from "../blog/dto";
 @ApiTags('Auth')
 @Controller("auth")
 export class AuthController {
@@ -56,6 +58,24 @@ export class AuthController {
             return response
         }
     }
+    @Post('blog/favorite')
+    @HttpCode(200)
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth('JWT-auth')
+    @ApiOkResponse({
+        type: () => ResponseFavoriteBlog,
+    })
+    async favoriteBlog(@Body() body: detailBlogDTO, @CurrentUser() currentUser: JwtDecode): Promise<any> {
+        const response = new ResponseFavoriteBlog()
+        try {
+            response.setSuccess(HttpStatus.OK, UserMessage.favoriteBlogSuccess, await this.authService.favoriteBlog(body, currentUser))
+            return response
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
+            return response
+        }
+    }
+
 
     // làm tiếp  getDetailUser,editUser, changePassword
     // getALLUsers --> admin có quyền truy cập, những role khác k có quyền 

@@ -10,4 +10,5 @@ export enum UserMessage {
     passwordInValid = "Password is invalid",
     refreshTokenSuccess = " Refresh token  successfully",
     refreshTokenUnauthorized = 'Refresh Token UnAuthorized.',
+    roleInValid = "Role is invalid"
 }

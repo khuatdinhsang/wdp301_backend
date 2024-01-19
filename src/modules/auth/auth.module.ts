@@ -6,10 +6,12 @@ import { User, UserSchema } from './schemas/user.schemas';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
+import { Blog, BlogSchema } from '../blog/schemas/blog.schemas';
 
 @Module({
     imports: [
-        MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+        MongooseModule.forFeature([{ name: User.name, schema: UserSchema },
+        { name: Blog.name, schema: BlogSchema }]),
         JwtModule.register({
             global: true,
         }),
