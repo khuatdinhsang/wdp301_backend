@@ -2,6 +2,7 @@
 export type JwtPayload = {
     id: string,
     fullName: string
+    role: string
 }
 export type Tokens = {
     accessToken: string,
@@ -12,4 +13,5 @@ export type JwtDecode = {
     fullName: string;
     iat: number;
     exp: number;
+    role: string
 };

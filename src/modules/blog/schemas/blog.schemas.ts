@@ -32,8 +32,10 @@ export class Blog {
     ward: string
     @Prop()
     addressDetail: string
-    @Prop()
+    @Prop({ default: 1 })
     totalRoom: number
+    @Prop({ default: 0 })
+    totalFavorite: number
     @Prop({ type: String, required: true, default: RentalObject.BOTH })
     rentalObject: RentalObject
     @Prop({ default: false })

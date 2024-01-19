@@ -5,15 +5,18 @@ import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './schemas/user.schemas';
 import * as bcrypt from 'bcrypt'
-import { HttpEnum, JwtEnum, UserMessage } from 'src/enums';
+import { HttpEnum, JwtEnum, UserMessage, UserRole } from 'src/enums';
 import { LoginDTO, dataTypeLogin, refreshTokenDTO, registerDTO } from './dto';
-import { JwtPayload, Tokens } from './types';
+import { JwtDecode, JwtPayload, Tokens } from './types';
 import { Jwt } from 'src/common/jwt';
+import { detailBlogDTO } from '../blog/dto';
+import { Blog } from '../blog/schemas/blog.schemas';
 @Injectable({})
 export class AuthService {
 
     constructor(
         @InjectModel(User.name) private userModel: Model<User>,
+        @InjectModel(Blog.name) private blogModel: Model<Blog>,
         private jwtService: JwtService
     ) { }
     async register(data: registerDTO): Promise<User> {
@@ -27,6 +30,11 @@ export class AuthService {
         if (password !== confirmPassword) {
             throw new Error(
                 UserMessage.passwordNotMatch
+            )
+        }
+        if (role === UserRole.ADMIN) {
+            throw new Error(
+                UserMessage.roleInValid
             )
         }
         const hash = bcrypt.hashSync(password, 10);
@@ -49,7 +57,7 @@ export class AuthService {
                 UserMessage.passwordInValid
             )
         }
-        const payload = { id: userExist._id.toString(), fullName: userExist.fullName };
+        const payload = { id: userExist._id.toString(), fullName: userExist.fullName, role: userExist.role };
         const tokens = await this.getTokens(payload)
         await this.userModel.findByIdAndUpdate(userExist._id, { $set: { refreshToken: tokens.refreshToken } }, { new: true })
         return tokens
@@ -64,9 +72,15 @@ export class AuthService {
         const tokens = await this.getTokens({
             id: user.id,
             fullName: user.fullName,
+            role: user.role
         });
         await this.userModel.findByIdAndUpdate(user._id, { $set: { refreshToken: tokens.refreshToken } }, { new: true })
         return tokens
+    }
+    async favoriteBlog(data: detailBlogDTO, currentUser: JwtDecode): Promise<any> {
+        const user = await this.userModel.findById(currentUser.id)
+        const userUpdated = await this.userModel.findByIdAndUpdate(currentUser.id, { $set: { blogsFavorite: [...user.blogsFavorite, data.id] } }, { new: true })
+        await this.blogModel.findByIdAndUpdate(data.id, { $set: { totalFavorite: userUpdated.blogsFavorite.length } }, { new: true })
     }
     async getTokens(payload: JwtPayload): Promise<Tokens> {
         const [accessToken, refreshToken] = await Promise.all([
