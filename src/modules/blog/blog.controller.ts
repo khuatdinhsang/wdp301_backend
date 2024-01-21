@@ -29,15 +29,15 @@ export class BlogController {
         }
     }
     @Get('detail/:id')
-    @ApiParam({ name: 'id', description: 'ID of the blog' })
+    @ApiParam({ name: 'id', description: 'ID of the blog', required: true })
     @HttpCode(200)
     @ApiOkResponse({
         type: () => ResponseBlog,
     })
-    async viewDetailBlog(@Param('id') id: detailBlogDTO): Promise<ResponseBlog> {
+    async viewDetailBlog(@Param() body: { id: string }): Promise<ResponseBlog> {
         const response = new ResponseBlog()
         try {
-            response.setSuccess(HttpStatus.OK, BlogMessage.detailBlogSuccess, await this.blogService.detailBlog(id))
+            response.setSuccess(HttpStatus.OK, BlogMessage.detailBlogSuccess, await this.blogService.detailBlog(body.id))
             return response
         } catch (error) {
             response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
@@ -45,15 +45,15 @@ export class BlogController {
         }
     }
     @Get('getAll/:category')
-    @ApiParam({ name: 'category', description: 'Category of the blog' })
+    @ApiParam({ name: 'category', description: 'Category of the blog', required: true })
     @HttpCode(200)
     @ApiOkResponse({
         type: () => ResponseBlog,
     })
-    async getAllBlog(@Param('category') category: getAllDTO): Promise<ResponseBlog> {
+    async getAllBlog(@Param() body: { category: getAllDTO }): Promise<ResponseBlog> {
         const response = new ResponseBlog()
         try {
-            response.setSuccess(HttpStatus.OK, BlogMessage.allBlogSuccess, await this.blogService.getAllBlog(category))
+            response.setSuccess(HttpStatus.OK, BlogMessage.allBlogSuccess, await this.blogService.getAllBlog(body.category))
             return response
         } catch (error) {
             response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
@@ -68,10 +68,10 @@ export class BlogController {
     @ApiOkResponse({
         type: () => ResponseBlog,
     })
-    async isHideBlog(@Param('id') id: detailBlogDTO): Promise<ResponseBlog> {
+    async isHideBlog(@Param() body: { id: string }): Promise<ResponseBlog> {
         const response = new ResponseBlog()
         try {
-            response.setSuccess(HttpStatus.OK, BlogMessage.hiddenBlogSuccess, await this.blogService.hiddenBlog(id))
+            response.setSuccess(HttpStatus.OK, BlogMessage.hiddenBlogSuccess, await this.blogService.hiddenBlog(body.id))
             return response
         } catch (error) {
             response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
@@ -96,5 +96,6 @@ export class BlogController {
             return response
         }
     }
+
 }
 
