@@ -7,5 +7,6 @@ export enum BlogMessage {
     detailBlogSuccess = "Get blog details successfully",
     allBlogSuccess = "Get all blog successfully",
     hiddenBlogSuccess = "Blog hidden is successfully",
-    updateBlogSuccess = "Blog update successfully"
+    updateBlogSuccess = "Blog update successfully",
+    fileRequire = "File is required"
 }

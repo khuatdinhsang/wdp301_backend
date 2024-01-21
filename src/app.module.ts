@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './modules/auth/auth.module';
 import { BlogModule } from './modules/blog/blog.modules';
+import { UploadModule } from './modules/common/upload/upload.modules';
 @Module({
   imports: [ConfigModule.forRoot({
     envFilePath: '.env',
@@ -16,7 +17,8 @@ import { BlogModule } from './modules/blog/blog.modules';
     }),
   }),
     AuthModule,
-    BlogModule
+    BlogModule,
+    UploadModule
   ],
   controllers: [AppController],
   providers: [AppService],

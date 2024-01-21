@@ -26,22 +26,21 @@ export class BlogService {
                 break
             }
             default: HasTagRoom.RENT
-
         }
         const createdBlog = await this.blogModel.create({ ...data, hasTag, userId: currentUser.id })
         const user = await this.userModel.findById(currentUser.id)
         await this.userModel.findByIdAndUpdate(currentUser.id, { $set: { blogsPost: [...user.blogsPost, createdBlog.id] } }, { new: true })
         return createdBlog.toObject();
     }
-    async detailBlog(id: detailBlogDTO): Promise<Blog> {
+    async detailBlog(id: string): Promise<Blog> {
         const blogDetail = await this.blogModel.findById(id)
         return blogDetail as Blog;
     }
     async getAllBlog(category: getAllDTO): Promise<Blog[]> {
-        const allBlog = await this.blogModel.find({ category }).lean().exec()
+        const allBlog = await this.blogModel.find({ category, isAccepted: true }).lean().exec()
         return allBlog as Blog[]
     }
-    async hiddenBlog(id: detailBlogDTO): Promise<Blog> {
+    async hiddenBlog(id: string): Promise<Blog> {
         const blog = await this.blogModel.findById(id)
         const blogHidden = await this.blogModel.findByIdAndUpdate(id, { $set: { isHide: blog.isHide ? false : true } }, { new: true })
         return blogHidden as Blog
