@@ -6,6 +6,7 @@ import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as path from 'path';
+// import * as formData from 'express-form-data';
 async function bootstrap() {
   // const app = await NestFactory.create(AppModule);
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -18,7 +19,7 @@ async function bootstrap() {
     methods: ['*'],
     credentials: true,
   });
-
+  // app.use(formData.parse());
   // config swagger
   swaggerConfig(app);
 
