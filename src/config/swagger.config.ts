@@ -18,6 +18,7 @@ const swaggerConfig = (app: INestApplication) => {
             },
             'JWT-auth',
         )
+        .addTag('File Upload')
         .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs/api', app, document);
