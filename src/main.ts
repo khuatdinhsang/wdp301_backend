@@ -25,7 +25,6 @@ async function bootstrap() {
 
   //  use global pipes
   app.useGlobalPipes(new ValidationPipe());
-
   // use cookie
   app.use(cookieParser());
   app.useStaticAssets(path.join(__dirname, '../uploads'));

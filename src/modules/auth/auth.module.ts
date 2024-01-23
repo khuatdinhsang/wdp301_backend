@@ -5,8 +5,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { User, UserSchema } from './schemas/user.schemas';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { AuthGuard } from './auth.guard';
+import { AuthGuardUser } from './auth.guard';
 import { Blog, BlogSchema } from '../blog/schemas/blog.schemas';
+import { PassportModule } from '@nestjs/passport';
+import { GoogleStrategy } from './google.strategy';
+import { FacebookStrategy } from './facebook.strategy';
 
 @Module({
     imports: [
@@ -15,10 +18,14 @@ import { Blog, BlogSchema } from '../blog/schemas/blog.schemas';
         JwtModule.register({
             global: true,
         }),
+        PassportModule.register({
+            defaultStrategy: 'social',
+            session: false,
+        }),
     ],
     controllers: [
         AuthController
     ],
-    providers: [AuthService, AuthGuard]
+    providers: [AuthService, AuthGuardUser, GoogleStrategy, FacebookStrategy],
 })
 export class AuthModule { }

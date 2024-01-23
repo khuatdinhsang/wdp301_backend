@@ -1,14 +1,16 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
 import { LoginDTO, ResponseRegister, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog } from "./dto";
 import { CurrentUser } from "./decorator/user.decorator";
 import { User } from "./schemas/user.schemas";
-import { AuthGuard } from "./auth.guard";
+import { AuthGuardUser } from "./auth.guard";
 import { JwtDecode } from "./types";
 import { detailBlogDTO } from "../blog/dto";
+import { GoogleAuthGuard } from "./google.guard";
+import { FacebookAuthGuard } from "./facebook.guard";
 @ApiTags('Auth')
 @Controller("auth")
 export class AuthController {
@@ -60,7 +62,7 @@ export class AuthController {
     }
     @Post('blog/favorite')
     @HttpCode(200)
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiOkResponse({
         type: () => ResponseFavoriteBlog,
@@ -75,11 +77,41 @@ export class AuthController {
             return response
         }
     }
+    @Get('google/login')
+    @UseGuards(GoogleAuthGuard)
+    async googleAuth() { }
 
+    @Get('google/callback')
+    @UseGuards(GoogleAuthGuard)
+    async googleAuthRedirect(@Req() req: any): Promise<ResponseLogin> {
+        const response = new ResponseLogin()
+        try {
+            response.setSuccess(HttpStatus.OK, UserMessage.loginSuccess, req.user)
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
+        }
+        return response
+    }
+
+    @Get('facebook/login')
+    @UseGuards(FacebookAuthGuard)
+    async facebookAuth() { }
+
+    @Get('facebook/callback')
+    @UseGuards(FacebookAuthGuard)
+    async facebookAuthRedirect(@Req() req: any): Promise<ResponseLogin> {
+        const response = new ResponseLogin()
+        try {
+            response.setSuccess(HttpStatus.OK, UserMessage.loginSuccess, req.user)
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
+        }
+        return response
+    }
 
     // làm tiếp  getDetailUser,editUser, changePassword
     // getALLUsers --> admin có quyền truy cập, những role khác k có quyền 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Get("profile")
     async profileDetail(@CurrentUser() currentUser: User) {
@@ -89,8 +121,4 @@ export class AuthController {
 
         }
     }
-
-
-
 }
-

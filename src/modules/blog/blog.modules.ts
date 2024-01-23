@@ -5,7 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { Blog, BlogSchema } from './schemas/blog.schemas';
 import { BlogController } from './blog.controller';
 import { BlogService } from './blog.service';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuardUser } from '../auth/auth.guard';
 import { User, UserSchema } from '../auth/schemas/user.schemas';
 
 @Module({
@@ -18,6 +18,6 @@ import { User, UserSchema } from '../auth/schemas/user.schemas';
     controllers: [
         BlogController
     ],
-    providers: [BlogService, AuthGuard]
+    providers: [BlogService, AuthGuardUser]
 })
 export class BlogModule { }

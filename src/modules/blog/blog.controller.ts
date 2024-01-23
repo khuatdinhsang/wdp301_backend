@@ -4,7 +4,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiTags } from "@nestjs/swagger
 import { BlogService } from "./blog.service";
 import { ResponseBlog, createBlogDTO, detailBlogDTO, editBlogDTO, getAllDTO } from "./dto";
 import { BlogMessage } from "src/enums";
-import { AuthGuard } from "../auth/auth.guard";
+import { AuthGuardUser } from "../auth/auth.guard";
 import { CurrentUser } from "../auth/decorator/user.decorator";
 import { JwtDecode } from "../auth/types";
 @ApiTags('Blog')
@@ -13,7 +13,7 @@ export class BlogController {
     constructor(private blogService: BlogService) { }
     @Post('create')
     @HttpCode(200)
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiOkResponse({
         type: () => ResponseBlog,
@@ -61,7 +61,7 @@ export class BlogController {
         }
     }
     @Put('hidden/:id')
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiParam({ name: 'id', description: 'ID of the blog' })
     @HttpCode(200)
@@ -79,7 +79,7 @@ export class BlogController {
         }
     }
     @Put('edit/:id')
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiParam({ name: 'id', description: 'ID of the blog' })
     @HttpCode(200)

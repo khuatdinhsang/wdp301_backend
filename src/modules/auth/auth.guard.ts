@@ -12,7 +12,7 @@ import { UserRole } from 'src/enums';
 // import { UserEntity } from '../user/entities/User.entity';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class AuthGuardUser implements CanActivate {
     constructor(private jwtService: JwtService) { }
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
