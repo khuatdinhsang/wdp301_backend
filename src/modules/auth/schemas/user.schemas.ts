@@ -8,10 +8,11 @@ import { Blog } from "src/modules/blog/schemas/blog.schemas";
 export type AccountDocument = HydratedDocument<User>;
 @Schema()
 export class User {
-    @Prop({ required: true })
+    @Prop()
     fullName: string
+    @Prop()
     email: string;
-    @Prop({ required: true })
+    @Prop()
     password: string;
     @Prop()
     avatar: string;
@@ -19,7 +20,7 @@ export class User {
     dateOfBirth: Date;
     @Prop()
     gender: boolean;
-    @Prop({ required: true })
+    @Prop()
     phone: string;
     @Prop()
     address: string;
@@ -35,8 +36,10 @@ export class User {
     blogsPost: Blog[]
     @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Blog' }] })
     blogsFavorite: Blog[]
-    @Prop({ type: String, required: true })
+    @Prop({ type: String })
     role: UserRole
+    @Prop()
+    idFacebook: string
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -3,7 +3,7 @@ import { Controller, HttpCode, HttpStatus, Post, Req, UploadedFile, UploadedFile
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { ResponseImage } from './dto/responseImage.dto';
 import { UploadService } from "./upload.service";
-import { AuthGuard } from "src/modules/auth/auth.guard";
+import { AuthGuardUser } from "src/modules/auth/auth.guard";
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { storageConfig } from "src/common/upload";
 import { extname } from "path";
@@ -14,7 +14,7 @@ import { fileMessage } from "src/enums";
 export class UploadController {
     constructor(private uploadService: UploadService) { }
     @Post('file')
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuardUser)
     @HttpCode(200)
     @ApiBearerAuth('JWT-auth')
     @ApiConsumes('multipart/form-data')
@@ -66,7 +66,7 @@ export class UploadController {
     }
 
     @Post('files')
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuardUser)
     @HttpCode(200)
     @ApiBearerAuth('JWT-auth')
     @ApiConsumes('multipart/form-data')
