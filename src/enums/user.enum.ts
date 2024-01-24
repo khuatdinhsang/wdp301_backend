@@ -12,4 +12,8 @@ export enum UserMessage {
     refreshTokenUnauthorized = 'Refresh Token UnAuthorized.',
     roleInValid = "Role is invalid",
     favoriteBlogSuccess = "Favorite Blog successfully",
+    editUserProfileFail = "Edit Profile failed",
+    editProfileSuccess = "Edit Profile successfully",
+    userNotFound = "User does not exist",
+    profileDetailSuccess = "Get profile successfully"
 }
