@@ -3,7 +3,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from "@n
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
-import { LoginDTO, ResponseRegister, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog } from "./dto";
+import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog } from "./dto";
 import { CurrentUser } from "./decorator/user.decorator";
 import { User } from "./schemas/user.schemas";
 import { AuthGuard } from "./auth.guard";
@@ -75,22 +75,42 @@ export class AuthController {
             return response
         }
     }
+    @Post('editProfile')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth('JWT-auth')
+    @HttpCode(200)
+    @ApiOkResponse({
+        type: () => ResponseLogin,
+    })
+    async editProfile(@Body() body: editProfileDTO, @CurrentUser() currentUser: JwtDecode): Promise<any> {
+        const response = new ResponseLogin(); 
+        try {
+            const updatedUser = await this.authService.editUserProfile(currentUser.id, body);
 
+
+            return response;
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+            return response;
+        }
+    }
 
     // làm tiếp  getDetailUser,editUser, changePassword
     // getALLUsers --> admin có quyền truy cập, những role khác k có quyền 
     @UseGuards(AuthGuard)
     @ApiBearerAuth('JWT-auth')
-    @Get("profile")
-    async profileDetail(@CurrentUser() currentUser: User) {
-        try {
-            return currentUser
-        } catch (error) {
-
-        }
+    @Get('profile')
+    async profileDetail(@CurrentUser() currentUser: JwtDecode): Promise<ResponseProfileDetail> {
+      const response = new ResponseProfileDetail();
+  
+      try {
+        const userProfile = await this.authService.profileDetail(currentUser.id);
+        response.setSuccess(HttpStatus.OK, UserMessage.profileDetailSuccess, userProfile);
+      } catch (error) {
+        response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      }
+  
+      return response;
     }
-
-
-
 }
 
