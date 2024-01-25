@@ -6,7 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from './schemas/user.schemas';
 import * as bcrypt from 'bcrypt'
 import { HttpEnum, JwtEnum, UserMessage, UserRole } from 'src/enums';
-import { LoginDTO, dataTypeLogin, refreshTokenDTO, registerDTO } from './dto';
+import { LoginDTO, dataTypeLogin, editProfileDTO, refreshTokenDTO, registerDTO } from './dto';
 import { JwtDecode, JwtPayload, Tokens } from './types';
 import { Jwt } from 'src/common/jwt';
 import { detailBlogDTO } from '../blog/dto';
@@ -96,6 +96,43 @@ export class AuthService {
         return {
             accessToken,
             refreshToken
+        }
+    }
+    async editUserProfile(userId: number, data: editProfileDTO): Promise<User> {
+        try {
+          const user = await this.userModel.findById(userId);
+    
+          if (!user) {
+            throw new Error(UserMessage.userNotFound);
+          }
+    
+          user.fullName = data.fullName;
+          if (data.email) user.email = data.email;
+          if (data.avatar) user.avatar = data.avatar;
+          if (data.fullName) user.fullName = data.fullName;
+          if (data.address) user.address = data.address;
+          if (data.gender) user.gender = data.gender;
+          if (data.phone) user.phone = data.phone;
+    
+          // Save the changes
+          const updatedUser = await user.save();
+    
+          // Return the updated user
+          return updatedUser.toObject();
+        } catch (error) {
+          console.error(error);
+          throw new Error(UserMessage.editUserProfileFail);
+        }
+      }
+    async profileDetail(userId: number): Promise<User> {
+        try {
+            const user = await this.userModel.findById(userId).select('-password -refreshToken');
+            if (!user) {
+                throw new Error(UserMessage.userNotFound);
+            }
+            return user.toObject();
+        } catch (error) {
+            console.error(error);            
         }
     }
 }
