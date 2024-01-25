@@ -86,7 +86,7 @@ export class AuthController {
     async editProfile(@Body() body: editProfileDTO, @CurrentUser() currentUser: JwtDecode): Promise<any> {
         const response = new ResponseLogin();
         try {
-            const await this.authService.editUserProfile(currentUser.id, body);
+            const updatedUser = await this.authService.editUserProfile(currentUser.id, body);
             return response;
         } catch (error) {
             response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
