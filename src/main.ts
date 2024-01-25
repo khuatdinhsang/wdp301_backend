@@ -3,9 +3,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import swaggerConfig from './config/swagger.config';
 import { ValidationPipe } from '@nestjs/common';
-import * as cookieParser from 'cookie-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as path from 'path';
+import cookieParser from 'cookie-parser';
 // import * as formData from 'express-form-data';
 async function bootstrap() {
   // const app = await NestFactory.create(AppModule);
@@ -27,6 +27,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   // use cookie
   app.use(cookieParser());
+  // read img public
   app.useStaticAssets(path.join(__dirname, '../uploads'));
 
   const PORT = process.env.SERVER_PORT;
