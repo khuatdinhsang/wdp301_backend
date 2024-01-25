@@ -13,11 +13,11 @@ import { detailBlogDTO } from '../blog/dto';
 import { Blog } from '../blog/schemas/blog.schemas';
 @Injectable({})
 export class AuthService {
-
     constructor(
         @InjectModel(User.name) private userModel: Model<User>,
         @InjectModel(Blog.name) private blogModel: Model<Blog>,
-        private jwtService: JwtService
+        private jwtService: JwtService,
+
     ) { }
     async register(data: registerDTO): Promise<User> {
         const { fullName, phone, password, confirmPassword, role } = data
