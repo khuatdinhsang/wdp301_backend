@@ -5,7 +5,6 @@ import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
 import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog } from "./dto";
 import { CurrentUser } from "./decorator/user.decorator";
-import { User } from "./schemas/user.schemas";
 import { AuthGuardUser } from "./auth.guard";
 import { JwtDecode } from "./types";
 import { detailBlogDTO } from "../blog/dto";
@@ -85,11 +84,9 @@ export class AuthController {
         type: () => ResponseLogin,
     })
     async editProfile(@Body() body: editProfileDTO, @CurrentUser() currentUser: JwtDecode): Promise<any> {
-        const response = new ResponseLogin(); 
+        const response = new ResponseLogin();
         try {
-            const updatedUser = await this.authService.editUserProfile(currentUser.id, body);
-
-
+            const await this.authService.editUserProfile(currentUser.id, body);
             return response;
         } catch (error) {
             response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
@@ -134,15 +131,15 @@ export class AuthController {
     @ApiBearerAuth('JWT-auth')
     @Get('profile')
     async profileDetail(@CurrentUser() currentUser: JwtDecode): Promise<ResponseProfileDetail> {
-      const response = new ResponseProfileDetail();
-  
-      try {
-        const userProfile = await this.authService.profileDetail(currentUser.id);
-        response.setSuccess(HttpStatus.OK, UserMessage.profileDetailSuccess, userProfile);
-      } catch (error) {
-        response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
-      }
-  
-      return response;
+        const response = new ResponseProfileDetail();
+
+        try {
+            const userProfile = await this.authService.profileDetail(currentUser.id);
+            response.setSuccess(HttpStatus.OK, UserMessage.profileDetailSuccess, userProfile);
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+        }
+
+        return response;
     }
 }

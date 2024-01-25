@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@aginix/nestjs-firebase-admin": "^2.2.0",
     "@nestjs-modules/mailer": "^1.10.3",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.1.1",
@@ -29,12 +30,17 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.3.0",
     "@nestjs/swagger": "^7.1.17",
+    "@vonage/server-sdk": "^3.12.2",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "cookie-parser": "^1.4.6",
     "express-form-data": "^2.0.23",
+    "firebase": "^10.7.2",
+    "firebase-admin": "^12.0.0",
     "mongoose": "^8.0.3",
+    "nestjs-firebase": "^10.3.0",
+    "nexmo": "^2.9.1",
     "passport": "^0.7.0",
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
@@ -42,7 +48,8 @@
     "path": "^0.12.7",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "swagger-ui-express": "^5.0.0"
+    "swagger-ui-express": "^5.0.0",
+    "twilio": "^4.20.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

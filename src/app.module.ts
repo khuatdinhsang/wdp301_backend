@@ -7,6 +7,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './modules/auth/auth.module';
 import { BlogModule } from './modules/blog/blog.modules';
 import { UploadModule } from './modules/common/upload/upload.modules';
+import { SmsModule } from './modules/common/sms/sms.modules';
 @Module({
   imports: [ConfigModule.forRoot({
     envFilePath: '.env',
@@ -16,9 +17,11 @@ import { UploadModule } from './modules/common/upload/upload.modules';
       uri: 'mongodb://0.0.0.0:27017/wdp301',
     }),
   }),
+
     AuthModule,
     BlogModule,
-    UploadModule
+    UploadModule,
+    SmsModule
   ],
   controllers: [AppController],
   providers: [AppService],
