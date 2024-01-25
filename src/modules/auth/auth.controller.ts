@@ -5,12 +5,12 @@ import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
 import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO } from "./dto";
 import { CurrentUser } from "./decorator/user.decorator";
-import { User } from "./schemas/user.schemas";
 import { AuthGuardUser } from "./auth.guard";
 import { JwtDecode } from "./types";
 import { detailBlogDTO } from "../blog/dto";
 import { GoogleAuthGuard } from "./google.guard";
 import { FacebookAuthGuard } from "./facebook.guard";
+import { User } from "./schemas/user.schemas";
 @ApiTags('Auth')
 @Controller("auth")
 export class AuthController {
@@ -88,8 +88,6 @@ export class AuthController {
         const response = new ResponseLogin();
         try {
             const updatedUser = await this.authService.editUserProfile(currentUser.id, body);
-
-
             return response;
         } catch (error) {
             response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
@@ -173,7 +171,6 @@ export class AuthController {
     @ApiBearerAuth('JWT-auth')
     @Get('getAllRenter')
     async getAllRenters(@CurrentUser() currentUser: JwtDecode): Promise<User[]> {
-        // Trích xuất thông tin vai trò từ JwtDecode
         const isAdmin = currentUser.role === 'admin';
         if (!isAdmin) {
             throw new Error(UserMessage.isNotAdmin)
