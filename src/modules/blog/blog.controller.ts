@@ -2,7 +2,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiTags } from "@nestjs/swagger";
 import { BlogService } from "./blog.service";
-import { ResponseBlog, createBlogDTO, detailBlogDTO, editBlogDTO, getAllDTO } from "./dto";
+import { ResponseBlog, createBlogDTO, detailBlogDTO, editBlogDTO, getAllDTO, preBlogDTO } from "./dto";
 import { BlogMessage } from "src/enums";
 import { AuthGuardUser } from "../auth/auth.guard";
 import { CurrentUser } from "../auth/decorator/user.decorator";
@@ -90,6 +90,41 @@ export class BlogController {
         const response = new ResponseBlog()
         try {
             response.setSuccess(HttpStatus.OK, BlogMessage.updateBlogSuccess, await this.blogService.editBlog(id, body))
+            return response
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
+            return response
+        }
+    }
+
+    @Put('BlogAccept/:id')
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @ApiParam({ name: 'id', description: 'ID of the blog' })
+    @HttpCode(200)
+    @ApiOkResponse({
+        type: () => ResponseBlog,
+    })
+    async acceptOrDeclineBlog(@Param('id') id: detailBlogDTO, @Body() body: preBlogDTO, @CurrentUser() currentUser: JwtDecode): Promise<ResponseBlog> {
+        const response = new ResponseBlog()
+        try {
+            response.setSuccess(HttpStatus.OK, BlogMessage.updateBlogSuccess, await this.blogService.acceptOrDeclineBlog(id, body, currentUser))
+            return response
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
+            return response
+        }
+    }
+
+    @Get('getAll/admin')
+    @HttpCode(200)
+    @ApiOkResponse({
+        type: () => ResponseBlog,
+    })
+    async getAllBlogAdmin(@CurrentUser() currentUser: JwtDecode): Promise<ResponseBlog> {
+        const response = new ResponseBlog()
+        try {
+            response.setSuccess(HttpStatus.OK, BlogMessage.allBlogSuccess, await this.blogService.getAllBlogAdmin(currentUser))
             return response
         } catch (error) {
             response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)

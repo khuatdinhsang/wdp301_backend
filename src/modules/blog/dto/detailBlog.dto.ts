@@ -14,3 +14,10 @@ export class getAllDTO {
     })
     category: string
 }
+
+export class preBlogDTO{
+
+    @ApiProperty({
+    })
+    isAccepted: Boolean
+}
