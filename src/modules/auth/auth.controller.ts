@@ -169,4 +169,15 @@ export class AuthController {
         }
     }
 
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('getAllRenter')
+    async getAllRenters(@CurrentUser() currentUser: JwtDecode): Promise<User[]> {
+        // Trích xuất thông tin vai trò từ JwtDecode
+        const isAdmin = currentUser.role === 'admin';
+        if (!isAdmin) {
+            throw new Error(UserMessage.isNotAdmin)
+        }
+        return this.authService.getAllRenters();
+    }
 }

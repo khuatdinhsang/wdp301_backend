@@ -17,5 +17,6 @@ export enum UserMessage {
     userNotFound = "User does not exist",
     profileDetailSuccess = "Get profile successfully",
     changePasswordFail = "Change password failed",
-    changePasswordSuccess = "Change password successfully"
+    changePasswordSuccess = "Change password successfully",
+    isNotAdmin = "Only Admin can access this resource"
 }

@@ -156,4 +156,8 @@ export class AuthService {
             throw new Error(UserMessage.changePasswordFail);
         }
     }
+
+    async getAllRenters(): Promise<User[]> {
+        return this.userModel.find({ role: UserRole.RENTER }).exec();
+      }
 }
