@@ -3,7 +3,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } fro
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
-import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog } from "./dto";
+import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO } from "./dto";
 import { CurrentUser } from "./decorator/user.decorator";
 import { User } from "./schemas/user.schemas";
 import { AuthGuardUser } from "./auth.guard";
@@ -85,7 +85,7 @@ export class AuthController {
         type: () => ResponseLogin,
     })
     async editProfile(@Body() body: editProfileDTO, @CurrentUser() currentUser: JwtDecode): Promise<any> {
-        const response = new ResponseLogin(); 
+        const response = new ResponseLogin();
         try {
             const updatedUser = await this.authService.editUserProfile(currentUser.id, body);
 
@@ -134,15 +134,39 @@ export class AuthController {
     @ApiBearerAuth('JWT-auth')
     @Get('profile')
     async profileDetail(@CurrentUser() currentUser: JwtDecode): Promise<ResponseProfileDetail> {
-      const response = new ResponseProfileDetail();
-  
-      try {
-        const userProfile = await this.authService.profileDetail(currentUser.id);
-        response.setSuccess(HttpStatus.OK, UserMessage.profileDetailSuccess, userProfile);
-      } catch (error) {
-        response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
-      }
-  
-      return response;
+        const response = new ResponseProfileDetail();
+
+        try {
+            const userProfile = await this.authService.profileDetail(currentUser.id);
+            response.setSuccess(HttpStatus.OK, UserMessage.profileDetailSuccess, userProfile);
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+        }
+
+        return response;
     }
+
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Post('changePassword')
+    async changePassword(@CurrentUser() currentUser: JwtDecode, @Body() changePasswordDto: ChangePasswordDTO): Promise<ResponseChangePassword> {
+        try {
+            const success = await this.authService.changePassword(currentUser.id, changePasswordDto);
+            if (!success) {
+                const response: ResponseChangePassword = new ResponseChangePassword();
+                response.setError(HttpStatus.BAD_REQUEST, UserMessage.changePasswordFail);
+                return response;
+            }
+
+            const response: ResponseChangePassword = new ResponseChangePassword();
+            response.isSuccess = true;
+            response.statusCode = HttpStatus.OK;
+            response.message = UserMessage.changePasswordSuccess;
+            return response;
+        } catch (error) {
+            console.error(error);
+            throw new Error(UserMessage.changePasswordFail);
+        }
+    }
+
 }
