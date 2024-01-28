@@ -15,5 +15,8 @@ export enum UserMessage {
     editUserProfileFail = "Edit Profile failed",
     editProfileSuccess = "Edit Profile successfully",
     userNotFound = "User does not exist",
-    profileDetailSuccess = "Get profile successfully"
+    profileDetailSuccess = "Get profile successfully",
+    changePasswordFail = "Change password failed",
+    changePasswordSuccess = "Change password successfully",
+    isNotAdmin = "Only Admin can access this resource"
 }
