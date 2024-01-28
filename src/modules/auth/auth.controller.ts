@@ -3,13 +3,14 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } fro
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
-import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog } from "./dto";
+import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword,  registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO } from "./dto";
 import { CurrentUser } from "./decorator/user.decorator";
 import { AuthGuardUser } from "./auth.guard";
 import { JwtDecode } from "./types";
 import { detailBlogDTO } from "../blog/dto";
 import { GoogleAuthGuard } from "./google.guard";
 import { FacebookAuthGuard } from "./facebook.guard";
+import { User } from "./schemas/user.schemas";
 @ApiTags('Auth')
 @Controller("auth")
 export class AuthController {
@@ -141,5 +142,39 @@ export class AuthController {
         }
 
         return response;
+    }
+
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Post('changePassword')
+    async changePassword(@CurrentUser() currentUser: JwtDecode, @Body() changePasswordDto: ChangePasswordDTO): Promise<ResponseChangePassword> {
+        try {
+            const success = await this.authService.changePassword(currentUser.id, changePasswordDto);
+            if (!success) {
+                const response: ResponseChangePassword = new ResponseChangePassword();
+                response.setError(HttpStatus.BAD_REQUEST, UserMessage.changePasswordFail);
+                return response;
+            }
+
+            const response: ResponseChangePassword = new ResponseChangePassword();
+            response.isSuccess = true;
+            response.statusCode = HttpStatus.OK;
+            response.message = UserMessage.changePasswordSuccess;
+            return response;
+        } catch (error) {
+            console.error(error);
+            throw new Error(UserMessage.changePasswordFail);
+        }
+    }
+
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('getAllRenter')
+    async getAllRenters(@CurrentUser() currentUser: JwtDecode): Promise<User[]> {
+        const isAdmin = currentUser.role === 'admin';
+        if (!isAdmin) {
+            throw new Error(UserMessage.isNotAdmin)
+        }
+        return this.authService.getAllRenters();
     }
 }

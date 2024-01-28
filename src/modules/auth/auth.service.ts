@@ -4,9 +4,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './schemas/user.schemas';
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcrypt';
 import { HttpEnum, JwtEnum, UserMessage, UserRole } from 'src/enums';
-import { LoginDTO, dataTypeLogin, editProfileDTO, refreshTokenDTO, registerDTO } from './dto';
+import { LoginDTO, dataTypeLogin, editProfileDTO, ChangePasswordDTO, refreshTokenDTO, registerDTO } from './dto';
 import { JwtDecode, JwtPayload, Tokens } from './types';
 import { Jwt } from 'src/common/jwt';
 import { detailBlogDTO } from '../blog/dto';
@@ -135,4 +135,29 @@ export class AuthService {
             console.error(error);            
         }
     }
+    async changePassword(userId: number, data: ChangePasswordDTO): Promise<boolean> {
+        try {
+            const { currentPassword, newPassword } = data;
+            const user = await this.userModel.findById(userId);
+
+            if (!user) {    
+                throw new Error(UserMessage.userNotFound);
+            }
+            const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+            if (!isCurrentPasswordValid) {
+                throw new Error(UserMessage.passwordInValid);
+            }
+            const hashedNewPassword = bcrypt.hashSync(newPassword, 10);
+            user.password = hashedNewPassword;
+            await user.save();
+            return true; 
+        } catch (error) {
+            console.error(error);
+            throw new Error(UserMessage.changePasswordFail);
+        }
+    }
+
+    async getAllRenters(): Promise<User[]> {
+        return this.userModel.find({ role: UserRole.RENTER }).exec();
+      }
 }
