@@ -8,6 +8,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { BlogModule } from './modules/blog/blog.modules';
 import { UploadModule } from './modules/common/upload/upload.modules';
 import { SmsModule } from './modules/common/sms/sms.modules';
+import { FeedbackModule } from './modules/feedback/feedback.modules';
+import { CommentModule } from './modules/comment/comment.module';
 @Module({
   imports: [ConfigModule.forRoot({
     envFilePath: '.env',
@@ -21,7 +23,9 @@ import { SmsModule } from './modules/common/sms/sms.modules';
     AuthModule,
     BlogModule,
     UploadModule,
-    SmsModule
+    SmsModule,
+    FeedbackModule,
+    CommentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

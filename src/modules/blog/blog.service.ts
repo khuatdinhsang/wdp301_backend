@@ -2,11 +2,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Blog } from './schemas/blog.schemas';
-import { createBlogDTO, detailBlogDTO, editBlogDTO, getAllDTO } from './dto';
-import { JwtDecode } from '../auth/types';
-import { User } from '../auth/schemas/user.schemas';
 import { CategoryRoom, HasTagRoom } from 'src/enums';
+import { AuthGuardUser } from '../auth/auth.guard';
+import { User } from '../auth/schemas/user.schemas';
+import { JwtDecode } from '../auth/types';
+import { createBlogDTO, detailBlogDTO, editBlogDTO, getAllDTO, preBlogDTO } from './dto';
+import { Blog } from './schemas/blog.schemas';
 
 @Injectable({})
 export class BlogService {
@@ -50,5 +51,25 @@ export class BlogService {
         const blogModify = { ...blog.toObject(), ...data }
         const blogEdited = await this.blogModel.findByIdAndUpdate(id, blogModify, { new: true })
         return blogEdited as Blog
+    }
+
+    async getAllBlogAdmin( currentUser: JwtDecode) {
+        const user = await this.userModel.findById(currentUser.id)
+        if (!AuthGuardUser.isAdmin(user)){
+            return null
+        }
+        const allBlog = await this.blogModel.find().lean().exec()
+        return allBlog as Blog[]
+    }
+
+    async acceptOrDeclineBlog(id: detailBlogDTO, payload: preBlogDTO, currentUser: JwtDecode) {
+        const user = await this.userModel.findById(currentUser.id)
+        if (!AuthGuardUser.isAdmin(user)){
+            return null
+        }
+        const blog = await this.blogModel.findById(id)
+        const blogModify = { ...blog.toObject(), ...payload }
+        const blogEdited = await this.blogModel.findByIdAndUpdate(id, blogModify, { new: true })
+        return blogEdited
     }
 }
