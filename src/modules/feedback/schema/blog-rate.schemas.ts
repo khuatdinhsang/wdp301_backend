@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import mongoose, { HydratedDocument } from "mongoose";
 
 export type BlogDocument = HydratedDocument<Blog_Rate>;
 @Schema()
@@ -14,5 +14,9 @@ export class Blog_Rate {
   title: string;
   @Prop()
   fullname: string;
+  @Prop()
+  time: Date;
+  @Prop()
+  file: string[];
 }
 export const BlogRateSchema = SchemaFactory.createForClass(Blog_Rate);

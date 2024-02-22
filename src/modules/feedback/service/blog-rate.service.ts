@@ -1,33 +1,35 @@
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model, ObjectId } from "mongoose";
-import { createBlogRateDto, updateBlogRateDto, detailBlogRateDTO } from "../dtos/blog-rate.dto";
-import { Blog_Rate } from "../schema/blog-rate.schemas";
-import { ResponseDataDTO } from "src/common/dto/ResponseData.dto";
-import { ResponseError } from "src/common/dto/ResponseError.dto";
-import ResponseHelper from "src/utils/respones.until";
+import mongoose, { Model } from "mongoose";
 import { Content } from "src/enums/content.enum";
 import { Subject } from "src/enums/subject.enum";
+import { JwtDecode } from "src/modules/auth/types";
+import ResponseHelper from "src/utils/respones.until";
+import { createBlogRateDto, detailBlogRateDTO, updateBlogRateDto } from "../dtos/blog-rate.dto";
+import { Blog_Rate } from "../schema/blog-rate.schemas";
+import { UploadService } from "src/modules/common/upload/upload.service";
 
 @Injectable({})
 export class BlogRateService {
     constructor(
         @InjectModel(Blog_Rate.name) private blogRateModel: Model<Blog_Rate>,
+        private readonly uploadService: UploadService,
     ) { }
-    async create(data: createBlogRateDto): Promise<Blog_Rate> {
-        const createdBlogRate = await this.blogRateModel.create({ ...data})
+    async create( data: createBlogRateDto, currentUser: JwtDecode ): Promise<Blog_Rate> {
+        const fileName = await this.uploadService.uploadMultipleObjects(data.file);
+        const createdBlogRate = await this.blogRateModel.create({...data, file: fileName, userId: currentUser.id, fullname: currentUser.fullName, time: new Date()})
         return createdBlogRate.toObject();
     }
     async getAll(): Promise<Blog_Rate[]> {
         const allBlogRate = await this.blogRateModel.find().lean().exec()
         return allBlogRate as Blog_Rate[]
     }
-    async update(id: detailBlogRateDTO, data: updateBlogRateDto) {
+    async update(id: string, data: updateBlogRateDto) {
         const blogRate = await this.blogRateModel.findById(id)
         if(!blogRate){
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
-                Subject.FEEDBACK,
+                Subject.BLOG,
                 Content.NOT_FOUND,
                 null,
             );

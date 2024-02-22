@@ -19,4 +19,24 @@ export class UploadService {
         return fileName;
       }
 
+    async uploadMultipleObjects(files: Express.Multer.File[]): Promise<string[]> {
+        const uploadFolder = path.join(__dirname, '..', 'file');
+        const uploadedFileNames: string[] = [];
+    
+        if (!fs.existsSync(uploadFolder)) {
+          fs.mkdirSync(uploadFolder, { recursive: true });
+        }
+    
+        for (const file of files) {
+          const fileName = `${Date.now()}-${file.originalname}`;
+          const filePath = path.join(uploadFolder, fileName);
+    
+          fs.writeFileSync(filePath, file.buffer);
+    
+          uploadedFileNames.push(fileName);
+        }
+    
+        return uploadedFileNames;
+      }
+
 }
