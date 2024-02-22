@@ -39,6 +39,9 @@ export class createBlogRateDto {
         example: '65d6237ed678344ce486b08f',
       })
       blogId: string;
+
+      @ApiProperty({ type: 'string', format: 'binary', required: false })
+      file: Express.Multer.File[];
 }
 export class blogFeedbackDTO{
   @ApiProperty({
@@ -67,7 +70,7 @@ export class updateBlogRateDto {
 
 export class detailBlogRateDTO {
   @ApiProperty({
-      example: '65a8944d9aae07aa4a0ac615',
+    example: '65a8944d9aae07aa4a0ac615',
   })
   id: string
 }

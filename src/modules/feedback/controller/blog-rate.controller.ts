@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { Content } from "src/enums/content.enum";
 import { Field } from "src/enums/field.enum";
 import { Subject } from "src/enums/subject.enum";
@@ -9,6 +9,7 @@ import { JwtDecode } from "src/modules/auth/types";
 import ResponseHelper from "src/utils/respones.until";
 import { blogFeedbackDTO, createBlogRateDto, detailBlogRateDTO, updateBlogRateDto } from "../dtos/blog-rate.dto";
 import { BlogRateService } from "../service/blog-rate.service";
+import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express/multer";
 
 @ApiTags('Blog_Rate')
 @Controller("blog_rate")
@@ -17,14 +18,21 @@ export class BlogRateController{
     constructor(private blogRateService: BlogRateService) { }
     @Post('create')
     @HttpCode(200)
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({ type: createBlogRateDto })
+    @UseInterceptors(FilesInterceptor('file'))
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiOkResponse({
         type: () => ResponseHelper,
     })
-    async create( @Body() payload: createBlogRateDto, @CurrentUser() currentUser: JwtDecode): Promise<ResponseHelper> {
+    async create(
+         @Body() payload: createBlogRateDto,
+         @CurrentUser() currentUser: JwtDecode,
+         @UploadedFiles() file: Array<Express.Multer.File>,
+        ): Promise<ResponseHelper> {
         try {
-            const result = await this.blogRateService.create(payload, currentUser)
+            const result = await this.blogRateService.create({...payload, file: file}, currentUser)
             return ResponseHelper.response(
                 HttpStatus.OK,
                 Subject.FEEDBACK,

@@ -8,10 +8,13 @@ import { BlogRateSchema, Blog_Rate } from './schema/blog-rate.schemas';
 import { BlogRateService } from './service/blog-rate.service';
 import { BlogService } from '../blog/blog.service';
 import { BlogModule } from '../blog/blog.modules';
+import { UploadModule } from '../common/upload/upload.modules';
+import { UploadService } from '../common/upload/upload.service';
 
 @Module({
     imports: [
         MongooseModule.forFeature([{ name: Blog_Rate.name, schema: BlogRateSchema }]),
+        UploadModule,
         JwtModule.register({
             global: true,
         }),
@@ -19,6 +22,6 @@ import { BlogModule } from '../blog/blog.modules';
     controllers: [
         BlogRateController
     ],
-    providers: [BlogRateService, AuthGuardUser],
+    providers: [BlogRateService, AuthGuardUser, UploadService],
 })
 export class FeedbackModule { }
