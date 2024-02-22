@@ -46,6 +46,18 @@ export class createBlogRateDto {
     description: 'bài đăng',
   })
   blogId: ObjectId;
+
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'nội dung đánh giá',
+  })
+  title: string;
+
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Fullname user',
+  })
+  fullname: string;
 }
 export class updateBlogRateDto {
   @IsNotEmpty()
