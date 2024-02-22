@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString, NotEquals } from "class-validator";
+import { IsMongoId, IsNotEmpty, IsString, NotEquals, isMongoId } from "class-validator";
 import { ObjectId } from "mongoose";
 import { Content } from "src/enums/content.enum";
 import { Subject } from "src/enums/subject.enum";
@@ -31,21 +31,21 @@ export class createBlogRateDto {
         description: 'đánh giá',
         default: 'đánh giá 1',
       })
-    feedback: string;
+      title: string;
 
-    @IsNotEmpty()
-    @NotEquals(null)
-    @ApiProperty({
-        description: 'người đánh giá',
-      })
-    UserId: ObjectId;
-
-    @IsNotEmpty()
-    @NotEquals(null)
-    @ApiProperty({
+      @IsNotEmpty()
+      @ApiProperty({
         description: 'bài đăng',
+        example: '65d6237ed678344ce486b08f',
       })
-    BlogId: ObjectId;
+      blogId: string;
+}
+export class blogFeedbackDTO{
+  @ApiProperty({
+      description: 'bài đăng',
+      example: '65d6237ed678344ce486b08f',
+    })
+    blogId: string;
 }
 export class updateBlogRateDto {
     @IsNotEmpty()
@@ -62,11 +62,12 @@ export class updateBlogRateDto {
         default: 'đánh giá 1',
       })
     feedback: string;
+    
 }
 
 export class detailBlogRateDTO {
   @ApiProperty({
       example: '65a8944d9aae07aa4a0ac615',
   })
-  id: ObjectId
+  id: string
 }

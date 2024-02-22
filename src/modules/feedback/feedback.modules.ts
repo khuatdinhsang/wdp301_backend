@@ -3,9 +3,11 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthGuardUser } from '../auth/auth.guard';
-import { blogRateController } from './controller/blog-rate.controller';
+import { BlogRateController } from './controller/blog-rate.controller';
 import { BlogRateSchema, Blog_Rate } from './schema/blog-rate.schemas';
 import { BlogRateService } from './service/blog-rate.service';
+import { BlogService } from '../blog/blog.service';
+import { BlogModule } from '../blog/blog.modules';
 
 @Module({
     imports: [
@@ -15,7 +17,7 @@ import { BlogRateService } from './service/blog-rate.service';
         }),
     ],
     controllers: [
-        blogRateController
+        BlogRateController
     ],
     providers: [BlogRateService, AuthGuardUser],
 })

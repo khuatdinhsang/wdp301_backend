@@ -1,5 +1,6 @@
 import { Prop,Schema, SchemaFactory } from "@nestjs/mongoose";
-import mongoose, { HydratedDocument } from "mongoose";
+import mongoose, { HydratedDocument, ObjectId } from "mongoose";
+import { Blog } from "src/modules/blog/schemas/blog.schemas";
 
 export type BlogDocument = HydratedDocument<Blog_Rate>;
 @Schema()

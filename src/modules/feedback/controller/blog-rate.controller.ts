@@ -1,18 +1,19 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
-import { BlogRateService } from "../service/blog-rate.service";
-import { AuthGuardUser } from "src/modules/auth/auth.guard";
-import ResponseHelper from "src/utils/respones.until";
-import { createBlogRateDto, updateBlogRateDto, detailBlogRateDTO } from "../dtos/blog-rate.dto";
-import { Subject } from "src/enums/subject.enum";
 import { Content } from "src/enums/content.enum";
 import { Field } from "src/enums/field.enum";
-import { ObjectId } from "mongoose";
+import { Subject } from "src/enums/subject.enum";
+import { AuthGuardUser } from "src/modules/auth/auth.guard";
+import { CurrentUser } from "src/modules/auth/decorator/user.decorator";
+import { JwtDecode } from "src/modules/auth/types";
+import ResponseHelper from "src/utils/respones.until";
+import { blogFeedbackDTO, createBlogRateDto, detailBlogRateDTO, updateBlogRateDto } from "../dtos/blog-rate.dto";
+import { BlogRateService } from "../service/blog-rate.service";
 
 @ApiTags('Blog_Rate')
 @Controller("blog_rate")
 
-export class blogRateController{
+export class BlogRateController{
     constructor(private blogRateService: BlogRateService) { }
     @Post('create')
     @HttpCode(200)
@@ -21,9 +22,9 @@ export class blogRateController{
     @ApiOkResponse({
         type: () => ResponseHelper,
     })
-    async create(@Body() payload: createBlogRateDto): Promise<ResponseHelper> {
+    async create( @Body() payload: createBlogRateDto, @CurrentUser() currentUser: JwtDecode): Promise<ResponseHelper> {
         try {
-            const result = await this.blogRateService.create(payload)
+            const result = await this.blogRateService.create(payload, currentUser)
             return ResponseHelper.response(
                 HttpStatus.OK,
                 Subject.FEEDBACK,
@@ -79,7 +80,7 @@ export class blogRateController{
         description: 'Cập nhật thành công',
     })
     async update(
-        @Param('id') id:detailBlogRateDTO,
+        @Param('id') id:string,
         @Body() payload: updateBlogRateDto,
         ) {
         try {
