@@ -1,136 +1,205 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiTags } from "@nestjs/swagger";
-import { BlogService } from "./blog.service";
-import { ResponseBlog, createBlogDTO, detailBlogDTO, editBlogDTO, getAllDTO, preBlogDTO } from "./dto";
-import { BlogMessage } from "src/enums";
-import { AuthGuardUser } from "../auth/auth.guard";
-import { CurrentUser } from "../auth/decorator/user.decorator";
-import { JwtDecode } from "../auth/types";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
+import { BlogService } from './blog.service';
+import {
+  ResponseBlog,
+  createBlogDTO,
+  detailBlogDTO,
+  editBlogDTO,
+  getAllDTO,
+  preBlogDTO,
+} from './dto';
+import { BlogMessage } from 'src/enums';
+import { AuthGuardUser } from '../auth/auth.guard';
+import { CurrentUser } from '../auth/decorator/user.decorator';
+import { JwtDecode } from '../auth/types';
 @ApiTags('Blog')
-@Controller("blog")
+@Controller('blog')
 export class BlogController {
-    constructor(private blogService: BlogService) { }
-    @Post('create')
-    @HttpCode(200)
-    @UseGuards(AuthGuardUser)
-    @ApiBearerAuth('JWT-auth')
-    @ApiOkResponse({
-        type: () => ResponseBlog,
-    })
-    async createBlog(@Body() body: createBlogDTO, @CurrentUser() currentUser: JwtDecode): Promise<ResponseBlog> {
-        const response = new ResponseBlog()
-        try {
-            response.setSuccess(HttpStatus.OK, BlogMessage.CreateBlogSuccess, await this.blogService.createBlog(body, currentUser))
-            return response
-        } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
-            return response
-        }
+  constructor(private blogService: BlogService) {}
+  @Post('create')
+  @HttpCode(200)
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  async createBlog(
+    @Body() body: createBlogDTO,
+    @CurrentUser() currentUser: JwtDecode,
+  ): Promise<ResponseBlog> {
+    const response = new ResponseBlog();
+    try {
+      response.setSuccess(
+        HttpStatus.OK,
+        BlogMessage.CreateBlogSuccess,
+        await this.blogService.createBlog(body, currentUser),
+      );
+      return response;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
     }
-    @Get('detail/:id')
-    @ApiParam({ name: 'id', description: 'ID of the blog', required: true })
-    @HttpCode(200)
-    @ApiOkResponse({
-        type: () => ResponseBlog,
-    })
-    async viewDetailBlog(@Param() body: { id: string }): Promise<ResponseBlog> {
-        const response = new ResponseBlog()
-        try {
-            response.setSuccess(HttpStatus.OK, BlogMessage.detailBlogSuccess, await this.blogService.detailBlog(body.id))
-            return response
-        } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
-            return response
-        }
+  }
+  @Get('detail/:id')
+  @ApiParam({ name: 'id', description: 'ID of the blog', required: true })
+  @HttpCode(200)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  async viewDetailBlog(@Param() body: { id: string }): Promise<ResponseBlog> {
+    const response = new ResponseBlog();
+    try {
+      response.setSuccess(
+        HttpStatus.OK,
+        BlogMessage.detailBlogSuccess,
+        await this.blogService.detailBlog(body.id),
+      );
+      return response;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
     }
-    @Get('getAll/:category')
-    @ApiParam({ name: 'category', description: 'Category of the blog', required: true })
-    @HttpCode(200)
-    @ApiOkResponse({
-        type: () => ResponseBlog,
-    })
-    async getAllBlog(@Param() body: { category: getAllDTO }): Promise<ResponseBlog> {
-        const response = new ResponseBlog()
-        try {
-            response.setSuccess(HttpStatus.OK, BlogMessage.allBlogSuccess, await this.blogService.getAllBlog(body.category))
-            return response
-        } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
-            return response
-        }
-    }
-    @Put('hidden/:id')
-    @UseGuards(AuthGuardUser)
-    @ApiBearerAuth('JWT-auth')
-    @ApiParam({ name: 'id', description: 'ID of the blog' })
-    @HttpCode(200)
-    @ApiOkResponse({
-        type: () => ResponseBlog,
-    })
-    async isHideBlog(@Param() body: { id: string }): Promise<ResponseBlog> {
-        const response = new ResponseBlog()
-        try {
-            response.setSuccess(HttpStatus.OK, BlogMessage.hiddenBlogSuccess, await this.blogService.hiddenBlog(body.id))
-            return response
-        } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
-            return response
-        }
-    }
-    @Put('edit/:id')
-    @UseGuards(AuthGuardUser)
-    @ApiBearerAuth('JWT-auth')
-    @ApiParam({ name: 'id', description: 'ID of the blog' })
-    @HttpCode(200)
-    @ApiOkResponse({
-        type: () => ResponseBlog,
-    })
-    async editBlog(@Param('id') id: detailBlogDTO, @Body() body: editBlogDTO): Promise<ResponseBlog> {
-        const response = new ResponseBlog()
-        try {
-            response.setSuccess(HttpStatus.OK, BlogMessage.updateBlogSuccess, await this.blogService.editBlog(id, body))
-            return response
-        } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
-            return response
-        }
-    }
+  }
 
-    @Put('BlogAccept/:id')
-    @UseGuards(AuthGuardUser)
-    @ApiBearerAuth('JWT-auth')
-    @ApiParam({ name: 'id', description: 'ID of the blog' })
-    @HttpCode(200)
-    @ApiOkResponse({
-        type: () => ResponseBlog,
-    })
-    async acceptOrDeclineBlog(@Param('id') id: detailBlogDTO, @Body() body: preBlogDTO, @CurrentUser() currentUser: JwtDecode): Promise<ResponseBlog> {
-        const response = new ResponseBlog()
-        try {
-            response.setSuccess(HttpStatus.OK, BlogMessage.updateBlogSuccess, await this.blogService.acceptOrDeclineBlog(id, body, currentUser))
-            return response
-        } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
-            return response
-        }
+  @Get('getAll/admin')
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(200)
+  @UseGuards(AuthGuardUser)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  async getAllBlogAdmin(
+    @CurrentUser() currentUser: JwtDecode,
+  ): Promise<ResponseBlog> {
+    const response = new ResponseBlog();
+    try {
+      response.setSuccess(
+        HttpStatus.OK,
+        BlogMessage.allBlogSuccess,
+        await this.blogService.getAllBlogAdmin(currentUser),
+      );
+      return response;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
     }
+  }
 
-    @Get('getAll/admin')
-    @HttpCode(200)
-    @ApiOkResponse({
-        type: () => ResponseBlog,
-    })
-    async getAllBlogAdmin(@CurrentUser() currentUser: JwtDecode): Promise<ResponseBlog> {
-        const response = new ResponseBlog()
-        try {
-            response.setSuccess(HttpStatus.OK, BlogMessage.allBlogSuccess, await this.blogService.getAllBlogAdmin(currentUser))
-            return response
-        } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
-            return response
-        }
+  @Get('getAll/:category')
+  @ApiParam({
+    name: 'category',
+    description: 'Category of the blog',
+    required: true,
+  })
+  @HttpCode(200)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  async getAllBlog(
+    @Param() body: { category: getAllDTO },
+  ): Promise<ResponseBlog> {
+    const response = new ResponseBlog();
+    try {
+      response.setSuccess(
+        HttpStatus.OK,
+        BlogMessage.allBlogSuccess,
+        await this.blogService.getAllBlog(body.category),
+      );
+      return response;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
     }
+  }
+  @Put('hidden/:id')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({ name: 'id', description: 'ID of the blog' })
+  @HttpCode(200)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  async isHideBlog(@Param() body: { id: string }): Promise<ResponseBlog> {
+    const response = new ResponseBlog();
+    try {
+      response.setSuccess(
+        HttpStatus.OK,
+        BlogMessage.hiddenBlogSuccess,
+        await this.blogService.hiddenBlog(body.id),
+      );
+      return response;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+  @Put('edit/:id')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({ name: 'id', description: 'ID of the blog' })
+  @HttpCode(200)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  async editBlog(
+    @Param('id') id: detailBlogDTO,
+    @Body() body: editBlogDTO,
+  ): Promise<ResponseBlog> {
+    const response = new ResponseBlog();
+    try {
+      response.setSuccess(
+        HttpStatus.OK,
+        BlogMessage.updateBlogSuccess,
+        await this.blogService.editBlog(id, body),
+      );
+      return response;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
 
+  @Put('BlogAccept/:id')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({ name: 'id', description: 'ID of the blog' })
+  @HttpCode(200)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  async acceptOrDeclineBlog(
+    @Param('id') id: detailBlogDTO,
+    @Body() body: preBlogDTO,
+    @CurrentUser() currentUser: JwtDecode,
+  ): Promise<ResponseBlog> {
+    const response = new ResponseBlog();
+    try {
+      response.setSuccess(
+        HttpStatus.OK,
+        BlogMessage.updateBlogSuccess,
+        await this.blogService.acceptOrDeclineBlog(id, body, currentUser),
+      );
+      return response;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
 }
-
