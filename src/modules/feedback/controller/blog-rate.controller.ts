@@ -20,7 +20,7 @@ export class BlogRateController{
     @HttpCode(200)
     @ApiConsumes('multipart/form-data')
     @ApiBody({ type: createBlogRateDto })
-    @UseInterceptors(FilesInterceptor('file'))
+    @UseInterceptors(FilesInterceptor('file', 5))
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiOkResponse({

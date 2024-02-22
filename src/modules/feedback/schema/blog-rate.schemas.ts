@@ -18,7 +18,5 @@ export class Blog_Rate {
   time: Date;
   @Prop()
   file: string[];
-  @Prop()
-  avt: string[];
 }
 export const BlogRateSchema = SchemaFactory.createForClass(Blog_Rate);

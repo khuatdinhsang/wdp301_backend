@@ -41,7 +41,7 @@ export class createBlogRateDto {
       blogId: string;
 
       @ApiProperty({ type: 'string', format: 'binary', required: false })
-      file: Express.Multer.File[];
+      file: Array<Express.Multer.File>;
 }
 export class blogFeedbackDTO{
   @ApiProperty({
