@@ -159,7 +159,7 @@ export class BlogController {
     type: () => ResponseBlog,
   })
   async editBlog(
-    @Param('id') id: detailBlogDTO,
+    @Param('id') id: string,
     @Body() body: editBlogDTO,
   ): Promise<ResponseBlog> {
     const response = new ResponseBlog();
