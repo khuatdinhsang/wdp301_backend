@@ -48,5 +48,7 @@ export class Blog {
     star: number
     @Prop({ default: false })
     isRented: boolean
+    @Prop({ default: 0 })
+    avgBlogRate: number
 }
 export const BlogSchema = SchemaFactory.createForClass(Blog);

@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
+import { FilesInterceptor } from "@nestjs/platform-express/multer";
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { Content } from "src/enums/content.enum";
 import { Field } from "src/enums/field.enum";
@@ -7,9 +8,8 @@ import { AuthGuardUser } from "src/modules/auth/auth.guard";
 import { CurrentUser } from "src/modules/auth/decorator/user.decorator";
 import { JwtDecode } from "src/modules/auth/types";
 import ResponseHelper from "src/utils/respones.until";
-import { blogFeedbackDTO, createBlogRateDto, detailBlogRateDTO, updateBlogRateDto } from "../dtos/blog-rate.dto";
+import { createBlogRateDto, updateBlogRateDto } from "../dtos/blog-rate.dto";
 import { BlogRateService } from "../service/blog-rate.service";
-import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express/multer";
 
 @ApiTags('Blog_Rate')
 @Controller("blog_rate")
@@ -79,8 +79,66 @@ export class BlogRateController{
         }
     }
 
+    @Get('GetAll/:blogId')
+    @HttpCode(200)
+    @ApiOkResponse({
+        type: () => ResponseHelper,
+    })
+    async getAllByBlogId(@Param('blogId') blogid: string): Promise<ResponseHelper> {
+        try {
+            const result = await this.blogRateService.getAllByBlogId(blogid)
+            return ResponseHelper.response(
+                HttpStatus.OK,
+                Subject.FEEDBACK,
+                Content.SUCCESSFULLY,
+                result,
+                Field.READ
+            )
+        } catch (error) {
+            return ResponseHelper.response(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                Subject.FEEDBACK,
+                Content.FAILED,
+                error,
+                Field.READ
+            )
+        }
+    }
+
+    @Get('check/:blogId')
+    @HttpCode(200)
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @ApiOkResponse({
+        type: () => ResponseHelper,
+    })
+    async CheckExistedBlog(@Param('blogId') blogid: string, @CurrentUser() currentUser: JwtDecode,) {
+        try {
+            const result = await this.blogRateService.CheckExistedBlog(blogid, currentUser)
+            return ResponseHelper.response(
+                HttpStatus.OK,
+                Subject.FEEDBACK,
+                Content.SUCCESSFULLY,
+                result,
+                Field.CHECK
+            )
+        } catch (error) {
+            return ResponseHelper.response(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                Subject.FEEDBACK,
+                Content.FAILED,
+                error,
+                Field.CHECK
+            )
+        }
+    }
+
+
     @Patch('update/:id')
     @HttpCode(200)
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({ type: createBlogRateDto })
+    @UseInterceptors(FilesInterceptor('file', 5))
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiOkResponse({
@@ -90,9 +148,10 @@ export class BlogRateController{
     async update(
         @Param('id') id:string,
         @Body() payload: updateBlogRateDto,
+        @UploadedFiles() file: Array<Express.Multer.File>,
         ) {
         try {
-            const result = await this.blogRateService.update(id, payload)
+            const result = await this.blogRateService.update(id, {...payload, file: file})
             return result
         } catch (error) {
             return ResponseHelper.response(
@@ -112,7 +171,7 @@ export class BlogRateController{
     @ApiOkResponse({
         type: () => ResponseHelper,
     })
-    async delete(@Param() id:detailBlogRateDTO): Promise<ResponseHelper> {
+    async delete(@Param('id') id:string): Promise<ResponseHelper> {
         try {
             const result = await this.blogRateService.delete(id)
             return result
