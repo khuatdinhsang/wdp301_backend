@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsMongoId, IsNotEmpty, IsString, NotEquals, isMongoId } from "class-validator";
+import { IsArray, IsMongoId, IsNotEmpty, IsString, NotEquals, isMongoId } from "class-validator";
 import { ObjectId } from "mongoose";
 import { Content } from "src/enums/content.enum";
 import { Subject } from "src/enums/subject.enum";
@@ -40,8 +40,12 @@ export class createBlogRateDto {
       })
       blogId: string;
 
-      @ApiProperty({ type: 'string', format: 'binary', required: false })
-      file: Array<Express.Multer.File>;
+      @ApiProperty({
+        example: ["http://img1.jpg", "http://img2.jpg"],
+      })
+      @IsArray()
+      @IsString({ each: true })
+      file: string[];
 }
 export class blogFeedbackDTO{
   @ApiProperty({
@@ -66,8 +70,12 @@ export class updateBlogRateDto {
       })
     title: string;
 
-    @ApiProperty({ type: 'string', format: 'binary', required: false })
-    file: Array<Express.Multer.File>;
+    @ApiProperty({
+      example: ["http://img1.jpg", "http://img2.jpg"],
+    })
+    @IsArray()
+    @IsString({ each: true })
+    file: string[];
     
 }
 

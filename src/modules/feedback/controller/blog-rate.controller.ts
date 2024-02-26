@@ -18,9 +18,6 @@ export class BlogRateController{
     constructor(private blogRateService: BlogRateService) { }
     @Post('create')
     @HttpCode(200)
-    @ApiConsumes('multipart/form-data')
-    @ApiBody({ type: createBlogRateDto })
-    @UseInterceptors(FilesInterceptor('file', 5))
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiOkResponse({
@@ -29,10 +26,9 @@ export class BlogRateController{
     async create(
          @Body() payload: createBlogRateDto,
          @CurrentUser() currentUser: JwtDecode,
-         @UploadedFiles() file: Array<Express.Multer.File>,
         ): Promise<ResponseHelper> {
         try {
-            const result = await this.blogRateService.create({...payload, file: file}, currentUser)
+            const result = await this.blogRateService.create(payload, currentUser)
             return ResponseHelper.response(
                 HttpStatus.OK,
                 Subject.FEEDBACK,
@@ -136,9 +132,6 @@ export class BlogRateController{
 
     @Patch('update/:id')
     @HttpCode(200)
-    @ApiConsumes('multipart/form-data')
-    @ApiBody({ type: createBlogRateDto })
-    @UseInterceptors(FilesInterceptor('file', 5))
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiOkResponse({
@@ -148,10 +141,9 @@ export class BlogRateController{
     async update(
         @Param('id') id:string,
         @Body() payload: updateBlogRateDto,
-        @UploadedFiles() file: Array<Express.Multer.File>,
         ) {
         try {
-            const result = await this.blogRateService.update(id, {...payload, file: file})
+            const result = await this.blogRateService.update(id, payload)
             return result
         } catch (error) {
             return ResponseHelper.response(
