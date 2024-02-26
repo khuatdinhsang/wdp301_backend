@@ -64,7 +64,10 @@ export class updateBlogRateDto {
         description: 'đánh giá',
         default: 'đánh giá 1',
       })
-    feedback: string;
+    title: string;
+
+    @ApiProperty({ type: 'string', format: 'binary', required: false })
+    file: Array<Express.Multer.File>;
     
 }
 

@@ -10,10 +10,11 @@ import { BlogService } from '../blog/blog.service';
 import { BlogModule } from '../blog/blog.modules';
 import { UploadModule } from '../common/upload/upload.modules';
 import { UploadService } from '../common/upload/upload.service';
+import { Blog, BlogSchema } from '../blog/schemas/blog.schemas';
 
 @Module({
     imports: [
-        MongooseModule.forFeature([{ name: Blog_Rate.name, schema: BlogRateSchema }]),
+        MongooseModule.forFeature([{ name: Blog_Rate.name, schema: BlogRateSchema }, { name: Blog.name, schema: BlogSchema }]),
         UploadModule,
         JwtModule.register({
             global: true,
