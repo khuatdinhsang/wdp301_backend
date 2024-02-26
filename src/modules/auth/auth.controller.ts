@@ -3,7 +3,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } fro
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
-import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword,  registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO } from "./dto";
+import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword,  registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO, ResponseToggleBlockUser } from "./dto";
 import { CurrentUser } from "./decorator/user.decorator";
 import { AuthGuardUser } from "./auth.guard";
 import { JwtDecode } from "./types";
@@ -88,12 +88,17 @@ export class AuthController {
         const response = new ResponseLogin();
         try {
             const updatedUser = await this.authService.editUserProfile(currentUser.id, body);
-            return response;
+            return updatedUser;
         } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+            if (error.message === UserMessage.phoneExist) {
+                response.setError(HttpStatus.BAD_REQUEST, UserMessage.phoneExist);
+            } else {
+                response.setError(HttpStatus.INTERNAL_SERVER_ERROR, UserMessage.editUserProfileFail);
+            }
             return response;
         }
     }
+    
     @Get('google/login')
     @UseGuards(GoogleAuthGuard)
     async googleAuth() { }
