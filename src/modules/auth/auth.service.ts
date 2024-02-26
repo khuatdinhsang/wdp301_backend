@@ -100,30 +100,39 @@ export class AuthService {
     }
     async editUserProfile(userId: number, data: editProfileDTO): Promise<User> {
         try {
-          const user = await this.userModel.findById(userId);
+            const user = await this.userModel.findById(userId);
     
-          if (!user) {
-            throw new Error(UserMessage.userNotFound);
-          }
+            if (!user) {
+                throw new Error(UserMessage.userNotFound);
+            }
     
-          user.fullName = data.fullName;
-          if (data.email) user.email = data.email;
-          if (data.avatar) user.avatar = data.avatar;
-          if (data.fullName) user.fullName = data.fullName;
-          if (data.address) user.address = data.address;
-          if (data.gender) user.gender = data.gender;
-          if (data.phone) user.phone = data.phone;
+            // Check if the new phone number already exists
+            if (data.phone && data.phone !== user.phone) {
+                const existingUserWithPhone = await this.userModel.findOne({ phone: data.phone });
     
-          // Save the changes
-          const updatedUser = await user.save();
+                if (existingUserWithPhone) {
+                    throw new Error(UserMessage.phoneExist);
+                }
+            }
     
-          // Return the updated user
-          return updatedUser.toObject();
+            // Update user data
+            user.fullName = data.fullName || user.fullName;
+            user.email = data.email || user.email;
+            user.avatar = data.avatar || user.avatar;
+            user.address = data.address || user.address;
+            user.phone = data.phone || user.phone;
+    
+            // Save the changes
+            const updatedUser = await user.save();
+    
+            // Return the updated user
+            return updatedUser.toObject();
         } catch (error) {
-          console.error(error);
-          throw new Error(UserMessage.editUserProfileFail);
+            console.error(error);
+            throw new Error(UserMessage.editUserProfileFail);
         }
-      }
+    }
+    
     async profileDetail(userId: number): Promise<User> {
         try {
             const user = await this.userModel.findById(userId).select('-password -refreshToken');
@@ -132,7 +141,7 @@ export class AuthService {
             }
             return user.toObject();
         } catch (error) {
-            console.error(error);            
+            console.error(error);
         }
     }
     async changePassword(userId: number, data: ChangePasswordDTO): Promise<boolean> {
@@ -140,7 +149,7 @@ export class AuthService {
             const { currentPassword, newPassword } = data;
             const user = await this.userModel.findById(userId);
 
-            if (!user) {    
+            if (!user) {
                 throw new Error(UserMessage.userNotFound);
             }
             const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
@@ -150,7 +159,7 @@ export class AuthService {
             const hashedNewPassword = bcrypt.hashSync(newPassword, 10);
             user.password = hashedNewPassword;
             await user.save();
-            return true; 
+            return true;
         } catch (error) {
             console.error(error);
             throw new Error(UserMessage.changePasswordFail);
@@ -159,5 +168,5 @@ export class AuthService {
 
     async getAllRenters(): Promise<User[]> {
         return this.userModel.find({ role: UserRole.RENTER }).exec();
-      }
+    }
 }
