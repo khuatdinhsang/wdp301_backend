@@ -9,18 +9,21 @@ import { UploadService } from "src/modules/common/upload/upload.service";
 import ResponseHelper from "src/utils/respones.until";
 import { createBlogRateDto, updateBlogRateDto } from "../dtos/blog-rate.dto";
 import { Blog_Rate } from "../schema/blog-rate.schemas";
+import { User } from "src/modules/auth/schemas/user.schemas";
 
 @Injectable({})
 export class BlogRateService {
     constructor(
         @InjectModel(Blog_Rate.name) private blogRateModel: Model<Blog_Rate>,
         @InjectModel(Blog.name) private blogModel: Model<Blog>,
+        @InjectModel(User.name) private userModel: Model<User>,
         private readonly uploadService: UploadService,
     ) { }
     async create( data: createBlogRateDto, currentUser: JwtDecode ): Promise<Blog_Rate> {
-        const fileName = await this.uploadService.uploadMultipleObjects(data.file);
         const blogId = data.blogId;
-        const createdBlogRate = await this.blogRateModel.create({...data, file: fileName, userId: currentUser.id, fullname: currentUser.fullName, time: new Date()})
+        const user = await this.userModel.findById(currentUser.id);
+        console.log(user);
+        const createdBlogRate = await this.blogRateModel.create({...data, userId: currentUser.id, fullname: currentUser.fullName, avt: user.avatar, time: new Date()})
         const allBlogRate = await this.blogRateModel.find({ blogId }).lean().exec()
         const totalStars = allBlogRate.reduce((total, rate) => total + rate.star, 0);
         const avgBlogRate = totalStars / allBlogRate.length;
@@ -47,7 +50,6 @@ export class BlogRateService {
     }
     async update(id: string, data: updateBlogRateDto) {
         const blogRate = await this.blogRateModel.findById(id)
-        const fileName = await this.uploadService.uploadMultipleObjects(data.file);
         if(!blogRate){
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
@@ -57,7 +59,7 @@ export class BlogRateService {
             );
         }
         else{
-            const blogRateModify = { ...blogRate.toObject(), ...data, file: fileName }
+            const blogRateModify = { ...blogRate.toObject(), ...data }
             const blogRateEdited = await this.blogRateModel.findByIdAndUpdate(id, blogRateModify, { new: true })
             return ResponseHelper.response(
                 HttpStatus.OK,

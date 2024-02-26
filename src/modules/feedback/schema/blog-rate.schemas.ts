@@ -15,6 +15,8 @@ export class Blog_Rate {
   @Prop()
   fullname: string;
   @Prop()
+  avt: string;
+  @Prop()
   time: Date;
   @Prop()
   file: string[];
