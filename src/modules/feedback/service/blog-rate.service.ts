@@ -61,6 +61,17 @@ export class BlogRateService {
         else{
             const blogRateModify = { ...blogRate.toObject(), ...data }
             const blogRateEdited = await this.blogRateModel.findByIdAndUpdate(id, blogRateModify, { new: true })
+            
+            const blogId = blogRate.blogId
+            const allBlogRate = await this.blogRateModel.find({ blogId }).lean().exec()
+            if(allBlogRate.length == 0){
+                await this.blogModel.findByIdAndUpdate(blogId, { avgBlogRate: 0 }).exec();
+            }
+            else{
+                const totalStars = allBlogRate.reduce((total, rate) => total + rate.star, 0);
+                const avgBlogRate = totalStars / allBlogRate.length;
+                await this.blogModel.findByIdAndUpdate(blogId, { avgBlogRate: avgBlogRate }).exec();
+            }
             return ResponseHelper.response(
                 HttpStatus.OK,
                 Subject.FEEDBACK,
