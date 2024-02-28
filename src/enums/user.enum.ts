@@ -23,7 +23,10 @@ export enum UserMessage {
     invalidAction = "Invalid action",
     toggleBlockUserFail = "Block user failed",
     toggleBlockUserSuccessfully = "Block user successfully",
-    unBlockUserSuccessfully = "Unblock User Successfully"
+    unBlockUserSuccessfully = "Unblock User Successfully",
+    FavouriteBlogSuccessfully = "Favourite Blog Successfully",
+    UnFavouriteBlogSuccessfully = "UnFavourite Blog Successfully",
+    blogNotFound = "Blog Not Found"
     
     
 }

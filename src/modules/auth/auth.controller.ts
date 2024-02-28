@@ -68,15 +68,16 @@ export class AuthController {
     @ApiOkResponse({
         type: () => ResponseFavoriteBlog,
     })
-    async favoriteBlog(@Body() body: detailBlogDTO, @CurrentUser() currentUser: JwtDecode): Promise<any> {
-        const response = new ResponseFavoriteBlog()
+    async favoriteBlog(@Body() body: detailBlogDTO, @CurrentUser() currentUser: JwtDecode) {
+        const response = new ResponseFavoriteBlog();
         try {
-            response.setSuccess(HttpStatus.OK, UserMessage.favoriteBlogSuccess, await this.authService.favoriteBlog(body, currentUser))
-            return response
+            const fvrBlog = await this.authService.favoriteBlog({blogId: body.id }, currentUser);
+            return  fvrBlog
         } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
-            return response
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+            return response;
         }
+        
     }
     @Post('editProfile')
     @UseGuards(AuthGuardUser)
