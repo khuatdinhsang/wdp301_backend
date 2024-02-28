@@ -1,7 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsMobilePhone, IsEnum, IsNotEmpty, IsOptional, IsString, IsBoolean, IsDate } from 'class-validator';
-import { UserRole } from 'src/enums/role.enum';
-import { UserMessage } from 'src/enums';
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 export class ChangePasswordDTO {
     @ApiProperty({ description: 'Current password' })
@@ -9,8 +7,9 @@ export class ChangePasswordDTO {
     @IsString({ message: 'Current password must be a string' })
     currentPassword: string;
 
-    @ApiProperty({ description: 'New password' })
+    @ApiProperty({ description: 'New password (at least 6 characters)' })
     @IsNotEmpty({ message: 'New password must not be empty' })
     @IsString({ message: 'New password must be a string' })
+    @MinLength(6, { message: 'New password must be at least 6 characters long' })
     newPassword: string;
 }
