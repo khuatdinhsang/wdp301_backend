@@ -171,7 +171,7 @@ export class BlogRateController{
                 Subject.FEEDBACK,
                 Content.FAILED,
                 error,
-                Field.UPDATE
+                Field.DELETE
             )
         }
     }
