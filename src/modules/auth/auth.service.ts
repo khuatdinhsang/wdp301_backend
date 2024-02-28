@@ -11,6 +11,7 @@ import { JwtDecode, JwtPayload, Tokens } from './types';
 import { Jwt } from 'src/common/jwt';
 import { detailBlogDTO } from '../blog/dto';
 import { Blog } from '../blog/schemas/blog.schemas';
+import { skip } from 'node:test';
 @Injectable({})
 export class AuthService {
     constructor(
@@ -165,8 +166,10 @@ export class AuthService {
     }
 
 
-    async getAllRenters(): Promise<User[]> {
-        return this.userModel.find({ role: UserRole.RENTER }).exec();
+    async getAllRenters(page: number): Promise<User[]> {
+        const pageSize = 10;
+        const skip = (page - 1) * pageSize;
+        return this.userModel.find({ role: UserRole.RENTER }).skip(skip).limit(pageSize).exec();
     }
     async toggleBlockUser(userId: string): Promise<{ status: number; message: string } | User> {
         const user = await this.userModel.findById(userId);
@@ -187,4 +190,26 @@ export class AuthService {
             return { status: 200, message: UserMessage.unBlockUserSuccessfully };
         }
     }
+    async getAllUsers(page: number): Promise<User[]> {
+        const pageSize = 10;
+        const skip = (page - 1) * pageSize;
+        return this.userModel.find({ role: { $in: [UserRole.RENTER, UserRole.LESSOR] } }).skip(skip).limit(pageSize).exec();
+
+    }
+    async getAllLessors(page: number): Promise<User[]> {
+        const pageSize = 10;
+        const skip = (page - 1) * pageSize;
+        return this.userModel.find({ role: UserRole.LESSOR }).skip(skip).limit(pageSize).exec();
+    }
+    async getAllBlogPostByUserId(userId: number, page: number): Promise<Blog[]> {
+        const pageSize = 10;
+        const skip = (page - 1) * pageSize;
+        const user = await this.userModel.findById(userId).populate('blogsPost');
+        if (!user) {
+            return [];
+        }
+        const blogPosts = user.blogsPost.slice(skip, skip + pageSize);
+        return blogPosts;
+    }
+
 }

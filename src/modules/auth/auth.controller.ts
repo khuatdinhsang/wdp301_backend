@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards, Param } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards, Param, Query, HttpException } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
@@ -11,6 +11,7 @@ import { detailBlogDTO } from "../blog/dto";
 import { GoogleAuthGuard } from "./google.guard";
 import { FacebookAuthGuard } from "./facebook.guard";
 import { User } from "./schemas/user.schemas";
+import { Blog } from "../blog/schemas/blog.schemas";
 @ApiTags('Auth')
 @Controller("auth")
 export class AuthController {
@@ -180,13 +181,35 @@ export class AuthController {
 
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
-    @Get('getAllRenter')
-    async getAllRenters(@CurrentUser() currentUser: JwtDecode): Promise<User[]> {
-        const isAdmin = currentUser.role === 'admin';
-        if (!isAdmin) {
-            throw new Error(UserMessage.isNotAdmin)
+    @Get('/getAllRenter/:page')
+    async getAllRenters(@CurrentUser() currentUser: JwtDecode, @Query('page') page: number): Promise<User[]> {
+        try {
+            const isAdmin = currentUser.role === 'admin';
+            if (!isAdmin) {
+                throw new Error(UserMessage.isNotAdmin);
+            }
+
+            const renters = await this.authService.getAllRenters(page);
+            return renters;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return this.authService.getAllRenters();
+    }
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('/getAllUsers/:page')
+    async getAllUsers(@CurrentUser() currentUser: JwtDecode, @Query('page') page: number): Promise<User[]> {
+        try {
+            const isAdmin = currentUser.role === 'admin';
+            if (!isAdmin) {
+                throw new Error(UserMessage.isNotAdmin);
+            }
+
+            const renters = await this.authService.getAllUsers(page);
+            return renters;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
@@ -217,4 +240,31 @@ export class AuthController {
             return response;
         }
     }
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('/getAllLessors/:page')
+    async getAllLessors(@CurrentUser() currentUser: JwtDecode, @Query('page') page: number): Promise<User[]> {
+        try {
+            const isAdmin = currentUser.role === 'admin';
+            if (!isAdmin) {
+                throw new Error(UserMessage.isNotAdmin);
+            }
+            const renters = await this.authService.getAllLessors(page);
+            return renters;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('/getAllBlogsPost/:page')
+    async getAllBlogPostByUser(@Query('page') page: number, @CurrentUser() currentUser: JwtDecode): Promise<Blog[]> {
+        try {
+            const blogPosts = await this.authService.getAllBlogPostByUserId(currentUser.id, page);
+            return blogPosts;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
