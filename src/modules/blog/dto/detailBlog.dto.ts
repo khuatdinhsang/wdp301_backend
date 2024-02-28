@@ -6,7 +6,7 @@ export class detailBlogDTO {
     @ApiProperty({
         example: '65a8944d9aae07aa4a0ac615',
     })
-    id: ObjectId
+    id: string
 }
 export class getAllDTO {
     @ApiProperty({
