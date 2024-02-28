@@ -12,5 +12,8 @@ export enum Content {
     NOT_NULL = 'not_null',
     EXIST = 'existed',
     NEEDED = 'needed',
+    MIN_VALUE = 'min',
+    MAX_VALUE = 'max',
+
   }
   

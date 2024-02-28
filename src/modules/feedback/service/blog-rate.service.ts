@@ -22,7 +22,6 @@ export class BlogRateService {
     async create( data: createBlogRateDto, currentUser: JwtDecode ): Promise<Blog_Rate> {
         const blogId = data.blogId;
         const user = await this.userModel.findById(currentUser.id);
-        console.log(user);
         const createdBlogRate = await this.blogRateModel.create({...data, userId: currentUser.id, fullname: currentUser.fullName, avt: user.avatar, time: new Date()})
         const allBlogRate = await this.blogRateModel.find({ blogId }).lean().exec()
         const totalStars = allBlogRate.reduce((total, rate) => total + rate.star, 0);
