@@ -1,9 +1,9 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards, Param } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
-import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword,  registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO, ResponseToggleBlockUser } from "./dto";
+import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO, ResponseToggleBlockUser } from "./dto";
 import { CurrentUser } from "./decorator/user.decorator";
 import { AuthGuardUser } from "./auth.guard";
 import { JwtDecode } from "./types";
@@ -93,12 +93,14 @@ export class AuthController {
             if (error.message === UserMessage.phoneExist) {
                 response.setError(HttpStatus.BAD_REQUEST, UserMessage.phoneExist);
             } else {
+                console.log(error.message);
+
                 response.setError(HttpStatus.INTERNAL_SERVER_ERROR, UserMessage.editUserProfileFail);
             }
             return response;
         }
     }
-    
+
     @Get('google/login')
     @UseGuards(GoogleAuthGuard)
     async googleAuth() { }
@@ -152,25 +154,29 @@ export class AuthController {
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Post('changePassword')
-    async changePassword(@CurrentUser() currentUser: JwtDecode, @Body() changePasswordDto: ChangePasswordDTO): Promise<ResponseChangePassword> {
+    async changePassword(
+        @CurrentUser() currentUser: JwtDecode,
+        @Body() changePasswordDto: ChangePasswordDTO
+    ): Promise<ResponseChangePassword> {
         try {
-            const success = await this.authService.changePassword(currentUser.id, changePasswordDto);
-            if (!success) {
-                const response: ResponseChangePassword = new ResponseChangePassword();
-                response.setError(HttpStatus.BAD_REQUEST, UserMessage.changePasswordFail);
-                return response;
-            }
+            const result = await this.authService.changePassword(currentUser.id, changePasswordDto);
 
             const response: ResponseChangePassword = new ResponseChangePassword();
             response.isSuccess = true;
             response.statusCode = HttpStatus.OK;
-            response.message = UserMessage.changePasswordSuccess;
+            response.message = result.message;
+            // Kiểm tra nếu có user được trả về từ service, thêm user vào response
+            if (result.user) {
+                response.user = result.user;
+            }
             return response;
         } catch (error) {
-            console.error(error);
-            throw new Error(UserMessage.changePasswordFail);
+            const response: ResponseChangePassword = new ResponseChangePassword();
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, UserMessage.changePasswordFail);
+            return response;
         }
     }
+
 
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
@@ -181,5 +187,34 @@ export class AuthController {
             throw new Error(UserMessage.isNotAdmin)
         }
         return this.authService.getAllRenters();
+    }
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Post(':userId/toggleBlock')
+    async toggleBlockUser(@Param('userId') userId: string, @CurrentUser() currentUser: JwtDecode): Promise<ResponseToggleBlockUser> {
+        const response = new ResponseToggleBlockUser();
+
+        try {
+            const isAdmin = currentUser.role === 'admin';
+            if (!isAdmin) {
+                throw new Error(UserMessage.isNotAdmin)
+            }
+
+            const result = await this.authService.toggleBlockUser(userId);
+            if ('status' in result) {
+                response.setError(result.status, result.message);
+                return response;
+            } else {
+                const response = new ResponseToggleBlockUser();
+                response.isSuccess = true;
+                response.statusCode = HttpStatus.OK;
+                response.message = UserMessage.toggleBlockUserSuccessfully;
+                response.user = result;
+                return response;
+            }
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+            return response;
+        }
     }
 }

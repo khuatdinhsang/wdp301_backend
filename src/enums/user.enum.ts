@@ -14,9 +14,16 @@ export enum UserMessage {
     favoriteBlogSuccess = "Favorite Blog successfully",
     editUserProfileFail = "Edit Profile failed",
     editProfileSuccess = "Edit Profile successfully",
-    userNotFound = "User does not exist",
+    userNotFound = 
+    "User does not exist",
     profileDetailSuccess = "Get profile successfully",
     changePasswordFail = "Change password failed",
     changePasswordSuccess = "Change password successfully",
-    isNotAdmin = "Only Admin can access this resource"
+    isNotAdmin = "Only Admin can access this resource",
+    invalidAction = "Invalid action",
+    toggleBlockUserFail = "Block user failed",
+    toggleBlockUserSuccessfully = "Block user successfully",
+    unBlockUserSuccessfully = "Unblock User Successfully"
+    
+    
 }

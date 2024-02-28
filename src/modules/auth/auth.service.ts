@@ -98,41 +98,37 @@ export class AuthService {
             refreshToken
         }
     }
-    async editUserProfile(userId: number, data: editProfileDTO): Promise<User> {
+    async editUserProfile(userId: number, data: editProfileDTO): Promise<{ status: number, message: string, user?: User }> {
         try {
             const user = await this.userModel.findById(userId);
-    
+
             if (!user) {
-                throw new Error(UserMessage.userNotFound);
+                return { status: 404, message: UserMessage.userNotFound };
             }
-    
-            // Check if the new phone number already exists
+
             if (data.phone && data.phone !== user.phone) {
                 const existingUserWithPhone = await this.userModel.findOne({ phone: data.phone });
-    
+
                 if (existingUserWithPhone) {
-                    throw new Error(UserMessage.phoneExist);
+                    return { status: 400, message: UserMessage.phoneExist };
                 }
             }
-    
-            // Update user data
+
             user.fullName = data.fullName || user.fullName;
             user.email = data.email || user.email;
             user.avatar = data.avatar || user.avatar;
             user.address = data.address || user.address;
             user.phone = data.phone || user.phone;
-    
-            // Save the changes
+
             const updatedUser = await user.save();
-    
-            // Return the updated user
-            return updatedUser.toObject();
+
+            return { status: 200, message: UserMessage.editProfileSuccess, user: updatedUser.toObject() };
         } catch (error) {
-            console.error(error);
-            throw new Error(UserMessage.editUserProfileFail);
+            return { status: 500, message: 'Internal Server Error' };
         }
     }
-    
+
+
     async profileDetail(userId: number): Promise<User> {
         try {
             const user = await this.userModel.findById(userId).select('-password -refreshToken');
@@ -144,29 +140,51 @@ export class AuthService {
             console.error(error);
         }
     }
-    async changePassword(userId: number, data: ChangePasswordDTO): Promise<boolean> {
+    async changePassword(userId: number, data: ChangePasswordDTO): Promise<{ status: number, message: string, user?: User }> {
         try {
             const { currentPassword, newPassword } = data;
             const user = await this.userModel.findById(userId);
 
             if (!user) {
-                throw new Error(UserMessage.userNotFound);
+                return { status: 404, message: UserMessage.userNotFound };
             }
+
             const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
             if (!isCurrentPasswordValid) {
-                throw new Error(UserMessage.passwordInValid);
+                return { status: 400, message: UserMessage.passwordInValid };
             }
-            const hashedNewPassword = bcrypt.hashSync(newPassword, 10);
+
+            const hashedNewPassword = await bcrypt.hash(newPassword, 10);
             user.password = hashedNewPassword;
             await user.save();
-            return true;
+
+            return { status: 200, message: UserMessage.changePasswordSuccess };
         } catch (error) {
-            console.error(error);
-            throw new Error(UserMessage.changePasswordFail);
+            return { status: 500, message: 'Internal Server Error' };
         }
     }
 
+
     async getAllRenters(): Promise<User[]> {
         return this.userModel.find({ role: UserRole.RENTER }).exec();
+    }
+    async toggleBlockUser(userId: string): Promise<{ status: number; message: string } | User> {
+        const user = await this.userModel.findById(userId);
+        if (!user) {
+            return { status: 404, message: UserMessage.userNotFound };
+        }
+    
+        user.block = {
+            isBlock: !user.block?.isBlock || false,
+            content: user.block?.content ,
+            day: new Date(),
+        };
+    
+        await user.save(); 
+        if (user.block?.isBlock) {
+            return { status: 200, message: UserMessage.toggleBlockUserSuccessfully };
+        } else {
+            return { status: 200, message: UserMessage.unBlockUserSuccessfully };
+        }
     }
 }
