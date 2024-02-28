@@ -3,21 +3,21 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthGuardUser } from '../auth/auth.guard';
-import { commentController } from './controller/comment.controller';
-import { Comments, commentsSchema } from './schemas/comment.schema';
+import { CommentController } from './controller/comment.controller';
+import { Comments, CommentsSchema } from './schemas/comment.schema';
 import { CommentService } from './service/comment.service';
-import { UploadService } from '../common/upload/upload.service';
+import { User, UserSchema } from '../auth/schemas/user.schemas';
 
 @Module({
     imports: [
-        MongooseModule.forFeature([{ name: Comments.name, schema: commentsSchema }]),
+        MongooseModule.forFeature([{ name: Comments.name, schema: CommentsSchema }, { name: User.name, schema: UserSchema }]),
         JwtModule.register({
             global: true,
         }),
     ],
     controllers: [
-        commentController
+        CommentController
     ],
-    providers: [CommentService, UploadService, AuthGuardUser],
+    providers: [CommentService, AuthGuardUser],
 })
 export class CommentModule { }
