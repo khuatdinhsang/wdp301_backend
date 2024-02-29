@@ -267,5 +267,17 @@ export class AuthController {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('/getAllFavoriteBlogs/:page')
+    async getAllFavouriteBlogsByUser(@Query('page') page: number, @CurrentUser() currentUser: JwtDecode): Promise<Blog[]>{
+        try {
+            const favoriteBlog = await this.authService.getAllFavouriteBlogsByUserId(currentUser.id, page);
+            return favoriteBlog;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }
