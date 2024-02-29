@@ -1,9 +1,9 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
-import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword,  registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO, ResponseToggleBlockUser } from "./dto";
+import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO } from "./dto";
 import { CurrentUser } from "./decorator/user.decorator";
 import { AuthGuardUser } from "./auth.guard";
 import { JwtDecode } from "./types";
@@ -98,10 +98,11 @@ export class AuthController {
             return response;
         }
     }
-    
+
     @Get('google/login')
     @UseGuards(GoogleAuthGuard)
-    async googleAuth() { }
+    async googleAuth(@Req() req) {
+    }
 
     @Get('google/callback')
     @UseGuards(GoogleAuthGuard)
