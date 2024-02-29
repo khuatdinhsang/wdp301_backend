@@ -211,23 +211,28 @@ export class AuthService {
         const skip = (page - 1) * pageSize;
         return this.userModel.find({ role: UserRole.RENTER }).skip(skip).limit(pageSize).exec();
     }
-    async toggleBlockUser(userId: string): Promise<{ status: number; message: string } | User> {
-        const user = await this.userModel.findById(userId);
-        if (!user) {
-            return { status: 404, message: UserMessage.userNotFound };
-        }
-
-        user.block = {
-            isBlock: !user.block?.isBlock || false,
-            content: user.block?.content,
-            day: new Date(),
-        };
-
-        await user.save();
-        if (user.block?.isBlock) {
-            return { status: 200, message: UserMessage.toggleBlockUserSuccessfully };
-        } else {
-            return { status: 200, message: UserMessage.unBlockUserSuccessfully };
+    async toggleBlockUser(userId: string, blockReason: string): Promise<{ status: number; message: string } | User> {
+        try {
+            const user = await this.userModel.findById(userId);
+            if (!user) {
+                return { status: 404, message: UserMessage.userNotFound };
+            }
+    
+            user.block = {
+                isBlock: !user.block?.isBlock || false,
+                content: blockReason,
+                day: new Date(),
+            };
+    
+            await user.save();
+            if (user.block?.isBlock) {
+                return { status: 200, message: UserMessage.toggleBlockUserSuccessfully };
+            } else {
+                return { status: 200, message: UserMessage.unBlockUserSuccessfully };
+            }
+        } catch (error) {
+            console.error("Error toggling block status:", error);
+            return { status: 500, message: "Internal server error" };
         }
     }
     async getAllUsers(page: number): Promise<User[]> {

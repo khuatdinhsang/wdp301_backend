@@ -12,6 +12,7 @@ import { GoogleAuthGuard } from "./google.guard";
 import { FacebookAuthGuard } from "./facebook.guard";
 import { User } from "./schemas/user.schemas";
 import { Blog } from "../blog/schemas/blog.schemas";
+import { ToggleBlockUserDTO } from "./dto/toggleBlockUser.dto";
 @ApiTags('Auth')
 @Controller("auth")
 export class AuthController {
@@ -215,32 +216,28 @@ export class AuthController {
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Post(':userId/toggleBlock')
-    async toggleBlockUser(@Param('userId') userId: string, @CurrentUser() currentUser: JwtDecode): Promise<ResponseToggleBlockUser> {
+    async toggleBlockUser(@Param('userId') userId: string, @Body() dto: ToggleBlockUserDTO): Promise<ResponseToggleBlockUser> {
         const response = new ResponseToggleBlockUser();
 
         try {
-            const isAdmin = currentUser.role === 'admin';
-            if (!isAdmin) {
-                throw new Error(UserMessage.isNotAdmin)
-            }
-
-            const result = await this.authService.toggleBlockUser(userId);
+            const { blockReason } = dto;
+            const result = await this.authService.toggleBlockUser(userId, blockReason); 
             if ('status' in result) {
                 response.setError(result.status, result.message);
-                return response;
             } else {
-                const response = new ResponseToggleBlockUser();
                 response.isSuccess = true;
                 response.statusCode = HttpStatus.OK;
                 response.message = UserMessage.toggleBlockUserSuccessfully;
                 response.user = result;
-                return response;
             }
         } catch (error) {
             response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
-            return response;
         }
+
+        return response;
     }
+
+  
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Get('/getAllLessors/:page')
