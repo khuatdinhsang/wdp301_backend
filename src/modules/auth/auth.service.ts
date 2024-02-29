@@ -159,7 +159,7 @@ export class AuthService {
             user.email = data.email || user.email;
             user.avatar = data.avatar || user.avatar;
             user.address = data.address || user.address;
-            user.phone = data.phone || user.phone;
+            user.gender = data.gender || user.gender;
 
             const updatedUser = await user.save();
 
