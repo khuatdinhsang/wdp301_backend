@@ -71,13 +71,13 @@ export class AuthController {
     async favoriteBlog(@Body() body: detailBlogDTO, @CurrentUser() currentUser: JwtDecode) {
         const response = new ResponseFavoriteBlog();
         try {
-            const fvrBlog = await this.authService.favoriteBlog({blogId: body.id }, currentUser);
-            return  fvrBlog
+            const fvrBlog = await this.authService.favoriteBlog({ blogId: body.id }, currentUser);
+            return fvrBlog
         } catch (error) {
             response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
             return response;
         }
-        
+
     }
     @Post('editProfile')
     @UseGuards(AuthGuardUser)
@@ -105,7 +105,8 @@ export class AuthController {
 
     @Get('google/login')
     @UseGuards(GoogleAuthGuard)
-    async googleAuth() { }
+    async googleAuth(@Req() req) {
+    }
 
     @Get('google/callback')
     @UseGuards(GoogleAuthGuard)
