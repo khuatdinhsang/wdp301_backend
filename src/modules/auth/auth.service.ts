@@ -89,34 +89,22 @@ export class AuthService {
         if (!user) {
             throw new Error(UserMessage.userNotFound);
         }
-
-
         const blog = await this.blogModel.findById(data.blogId);
         if (!blog) {
             throw new Error(UserMessage.blogNotFound);
         }
-
         const blogId = new mongoose.Types.ObjectId(data.blogId);
-
         const isFavorite = user.blogsFavorite.some(favoriteBlogId => favoriteBlogId.toString() === blogId.toString());
         if (isFavorite) {
-            console.log("haha");
-            
             user.blogsFavorite = user.blogsFavorite.filter(blogId => blogId.toString() !== data.blogId);
             blog.totalFavorite -= 1; 
             await blog.save();
-        } else {
-            console.log("hahaha");
-            
-            
+        } else {                    
             user.blogsFavorite.push(blog);
             blog.totalFavorite += 1; 
             await blog.save();
         }
-
-        // Lưu các thay đổi vào cơ sở dữ liệu
         await user.save();
-
         if(isFavorite){
             return ResponseHelper.response(
                 HttpStatus.OK,
@@ -262,6 +250,16 @@ export class AuthService {
         }
         const blogPosts = user.blogsPost.slice(skip, skip + pageSize);
         return blogPosts;
+    }
+    async getAllFavouriteBlogsByUserId(userId: number, page: number): Promise<Blog[]>{
+        const pageSize = 10; 
+        const skip = (page - 1) * pageSize;
+        const user = (await this.userModel.findById(userId)).populate('blogsFavorite');
+        if(!user){
+            return [];
+        }
+        const favoriteBlog = (await user).blogsFavorite.slice(skip, skip + pageSize);
+        return favoriteBlog;
     }
 
 }
