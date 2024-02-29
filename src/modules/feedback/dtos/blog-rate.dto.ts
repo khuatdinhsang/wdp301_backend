@@ -1,28 +1,35 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsMongoId, IsNotEmpty, IsString, NotEquals, isMongoId } from "class-validator";
+import { IsArray, IsInt, IsMongoId, IsNotEmpty, IsString, Max, Min, NotEquals, isMongoId } from "class-validator";
 import { ObjectId } from "mongoose";
 import { Content } from "src/enums/content.enum";
 import { Subject } from "src/enums/subject.enum";
 import ResponseHelper from "src/utils/respones.until";
 
 export class createBlogRateDto {
-    @IsNotEmpty({
+    @IsInt({
       message: ResponseHelper.responseDto(
         Subject.FEEDBACK,
-        Content.REQUIRED,
+        Content.INVALID,
         "star"
-      )
-    })
-    @NotEquals(null,{
+        )
+      })
+    @Min(1, {
       message: ResponseHelper.responseDto(
         Subject.FEEDBACK,
-        Content.NOT_NULL,
-        "star"
-      )
-    })
+        Content.MIN_VALUE,
+        "star",
+        )
+      })
+    @Max(5, {
+      message: ResponseHelper.responseDto(
+        Subject.FEEDBACK,
+        Content.MAX_VALUE,
+        "star",
+        )
+      })
     @ApiProperty({
         description: 'điểm đánh giá',
-        default: '0',
+        default: '1',
       })
     star: number;
     

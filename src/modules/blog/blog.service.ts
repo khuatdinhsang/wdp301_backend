@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CategoryRoom, HasTagRoom } from 'src/enums';
@@ -14,6 +14,9 @@ import {
   preBlogDTO,
 } from './dto';
 import { Blog } from './schemas/blog.schemas';
+import ResponseHelper from 'src/utils/respones.until';
+import { Content } from 'src/enums/content.enum';
+import { Subject } from 'src/enums/subject.enum';
 
 @Injectable({})
 export class BlogService {
@@ -86,20 +89,86 @@ export class BlogService {
     return allBlog as Blog[];
   }
 
-  async acceptOrDeclineBlog(
-    id: detailBlogDTO,
-    payload: preBlogDTO,
+  async acceptBlog(
+    id: string,
     currentUser: JwtDecode,
   ) {
     const user = await this.userModel.findById(currentUser.id);
     if (!AuthGuardUser.isAdmin(user)) {
-      return null;
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+    );
+      
     }
-    const blog = await this.blogModel.findById(id);
-    const blogModify = { ...blog.toObject(), ...payload };
-    const blogEdited = await this.blogModel.findByIdAndUpdate(id, blogModify, {
+    const blogEdited = await this.blogModel.findByIdAndUpdate(id, {isAccepted: true}, {
       new: true,
     });
     return blogEdited;
   }
+
+  async declineBlog(
+    id: string,
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id);
+    if (!AuthGuardUser.isAdmin(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+    );
+      
+    }
+    const blogEdited = await this.blogModel.findByIdAndUpdate(id, {isAccepted: false}, {
+      new: true,
+    });
+    return blogEdited;
+  }
+
+  async blogRented(
+    id: string,
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id);
+
+    if (!AuthGuardUser.isLessor(user)&& !AuthGuardUser.isAdmin(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+    );
+      
+    }
+    const blogEdited = await this.blogModel.findByIdAndUpdate(id, {isRented: true}, {
+      new: true,
+    });
+    return blogEdited;
+  }
+
+  async blogUnrented(
+    id: string,
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id);
+
+    if (!AuthGuardUser.isLessor(user)&& !AuthGuardUser.isAdmin(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+    );
+      
+    }
+    const blogEdited = await this.blogModel.findByIdAndUpdate(id, {isRented: false}, {
+      new: true,
+    });
+    return blogEdited;
+  }
+
 }

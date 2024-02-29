@@ -1,49 +1,43 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString, NotEquals } from "class-validator";
-import { ObjectId } from "mongoose";
+import { IsArray, IsNotEmpty, IsString } from "class-validator";
 
-export class createCommentDto {
+export class CreateCommentDto {
 
-    @IsNotEmpty()
-    @NotEquals(null)
-    @ApiProperty({
-        description: 'content comment',
-        default: 'comment 1',
+        @IsString()
+        @ApiProperty({
+            description: 'đánh giá',
+            default: 'đánh giá 1',
+        })
+        title: string;
+
+      @IsNotEmpty()
+      @ApiProperty({
+        description: 'bài đăng',
+        example: '65dc8a47cccd796be62f226d',
       })
-    content: string;
-    
-    @ApiProperty({ type: 'string', format: 'binary', required: false })
-    file: Express.Multer.File;
+      feedbackId: string;
 
-    @IsNotEmpty()
-    @NotEquals(null)
-    @ApiProperty({
-        description: 'người đánh giá',
+      @ApiProperty({
+        example: ["http://img1.jpg", "http://img2.jpg"],
       })
-    feedBackId: ObjectId;
+      @IsArray()
+      @IsString({ each: true })
+      file: string[];
 }
-export class updateCommentDto {
-    @IsNotEmpty()
-    @NotEquals(null)
-    @ApiProperty({
-        description: 'content comment',
-        default: 'comment 1',
-      })
-    content: string;
-    
-    @ApiProperty({ type: 'string', format: 'binary', required: false })
-    file: Express.Multer.File;
-}
+export class UpdateCommentDto {
 
-export class getAllCommentDTO {
+    @IsString()
     @ApiProperty({
+        description: 'đánh giá',
+        default: 'đánh giá 1',
+      })
+    title: string;
+
+    @ApiProperty({
+      example: ["http://img1.jpg", "http://img2.jpg"],
     })
-    feedBackId: ObjectId
-}
-
-export class detailCommentDTO {
-    @ApiProperty({
-        example: '65a8944d9aae07aa4a0ac615',
-    })
-    id: ObjectId
+    @IsArray()
+    @IsString({ each: true })
+    file: string[];
+    
 }

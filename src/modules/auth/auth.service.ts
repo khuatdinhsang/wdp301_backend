@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './schemas/user.schemas';
 import * as bcrypt from 'bcrypt';
@@ -11,6 +11,10 @@ import { JwtDecode, JwtPayload, Tokens } from './types';
 import { Jwt } from 'src/common/jwt';
 import { detailBlogDTO } from '../blog/dto';
 import { Blog } from '../blog/schemas/blog.schemas';
+import { skip } from 'node:test';
+import ResponseHelper from 'src/utils/respones.until';
+import { Subject } from 'src/enums/subject.enum';
+import { Content } from 'src/enums/content.enum';
 @Injectable({})
 export class AuthService {
     constructor(
@@ -77,11 +81,60 @@ export class AuthService {
         await this.userModel.findByIdAndUpdate(user._id, { $set: { refreshToken: tokens.refreshToken } }, { new: true })
         return tokens
     }
-    async favoriteBlog(data: detailBlogDTO, currentUser: JwtDecode): Promise<any> {
-        const user = await this.userModel.findById(currentUser.id)
-        const userUpdated = await this.userModel.findByIdAndUpdate(currentUser.id, { $set: { blogsFavorite: [...user.blogsFavorite, data.id] } }, { new: true })
-        await this.blogModel.findByIdAndUpdate(data.id, { $set: { totalFavorite: userUpdated.blogsFavorite.length } }, { new: true })
+
+
+    async favoriteBlog(data: { blogId: string }, currentUser: JwtDecode) {
+        // Tìm người dùng hiện tại
+        const user = await this.userModel.findById(currentUser.id);
+        if (!user) {
+            throw new Error(UserMessage.userNotFound);
+        }
+
+
+        const blog = await this.blogModel.findById(data.blogId);
+        if (!blog) {
+            throw new Error(UserMessage.blogNotFound);
+        }
+
+        const blogId = new mongoose.Types.ObjectId(data.blogId);
+
+        const isFavorite = user.blogsFavorite.some(favoriteBlogId => favoriteBlogId.toString() === blogId.toString());
+        if (isFavorite) {
+            console.log("haha");
+            
+            user.blogsFavorite = user.blogsFavorite.filter(blogId => blogId.toString() !== data.blogId);
+            blog.totalFavorite -= 1; 
+            await blog.save();
+        } else {
+            console.log("hahaha");
+            
+            
+            user.blogsFavorite.push(blog);
+            blog.totalFavorite += 1; 
+            await blog.save();
+        }
+
+        // Lưu các thay đổi vào cơ sở dữ liệu
+        await user.save();
+
+        if(isFavorite){
+            return ResponseHelper.response(
+                HttpStatus.OK,
+                Subject.UNFAVORITEBLOG,
+                Content.SUCCESSFULLY,
+                user,
+            );
+        }else{
+            return ResponseHelper.response(
+                HttpStatus.OK,
+                Subject.FAVORITEBLOG,
+                Content.SUCCESSFULLY,
+                user,
+            );
+        }
     }
+
+
     async getTokens(payload: JwtPayload): Promise<Tokens> {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
@@ -98,41 +151,37 @@ export class AuthService {
             refreshToken
         }
     }
-    async editUserProfile(userId: number, data: editProfileDTO): Promise<User> {
+    async editUserProfile(userId: number, data: editProfileDTO): Promise<{ status: number, message: string, user?: User }> {
         try {
             const user = await this.userModel.findById(userId);
-    
+
             if (!user) {
-                throw new Error(UserMessage.userNotFound);
+                return { status: 404, message: UserMessage.userNotFound };
             }
-    
-            // Check if the new phone number already exists
+
             if (data.phone && data.phone !== user.phone) {
                 const existingUserWithPhone = await this.userModel.findOne({ phone: data.phone });
-    
+
                 if (existingUserWithPhone) {
-                    throw new Error(UserMessage.phoneExist);
+                    return { status: 400, message: UserMessage.phoneExist };
                 }
             }
-    
-            // Update user data
+
             user.fullName = data.fullName || user.fullName;
             user.email = data.email || user.email;
             user.avatar = data.avatar || user.avatar;
             user.address = data.address || user.address;
             user.phone = data.phone || user.phone;
-    
-            // Save the changes
+
             const updatedUser = await user.save();
-    
-            // Return the updated user
-            return updatedUser.toObject();
+
+            return { status: 200, message: UserMessage.editProfileSuccess, user: updatedUser.toObject() };
         } catch (error) {
-            console.error(error);
-            throw new Error(UserMessage.editUserProfileFail);
+            return { status: 500, message: 'Internal Server Error' };
         }
     }
-    
+
+
     async profileDetail(userId: number): Promise<User> {
         try {
             const user = await this.userModel.findById(userId).select('-password -refreshToken');
@@ -144,29 +193,75 @@ export class AuthService {
             console.error(error);
         }
     }
-    async changePassword(userId: number, data: ChangePasswordDTO): Promise<boolean> {
+    async changePassword(userId: number, data: ChangePasswordDTO): Promise<{ status: number, message: string, user?: User }> {
         try {
             const { currentPassword, newPassword } = data;
             const user = await this.userModel.findById(userId);
 
             if (!user) {
-                throw new Error(UserMessage.userNotFound);
+                return { status: 404, message: UserMessage.userNotFound };
             }
+
             const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
             if (!isCurrentPasswordValid) {
-                throw new Error(UserMessage.passwordInValid);
+                return { status: 400, message: UserMessage.passwordInValid };
             }
-            const hashedNewPassword = bcrypt.hashSync(newPassword, 10);
+
+            const hashedNewPassword = await bcrypt.hash(newPassword, 10);
             user.password = hashedNewPassword;
             await user.save();
-            return true;
+
+            return { status: 200, message: UserMessage.changePasswordSuccess };
         } catch (error) {
-            console.error(error);
-            throw new Error(UserMessage.changePasswordFail);
+            return { status: 500, message: 'Internal Server Error' };
         }
     }
 
-    async getAllRenters(): Promise<User[]> {
-        return this.userModel.find({ role: UserRole.RENTER }).exec();
+
+    async getAllRenters(page: number): Promise<User[]> {
+        const pageSize = 10;
+        const skip = (page - 1) * pageSize;
+        return this.userModel.find({ role: UserRole.RENTER }).skip(skip).limit(pageSize).exec();
     }
+    async toggleBlockUser(userId: string): Promise<{ status: number; message: string } | User> {
+        const user = await this.userModel.findById(userId);
+        if (!user) {
+            return { status: 404, message: UserMessage.userNotFound };
+        }
+
+        user.block = {
+            isBlock: !user.block?.isBlock || false,
+            content: user.block?.content,
+            day: new Date(),
+        };
+
+        await user.save();
+        if (user.block?.isBlock) {
+            return { status: 200, message: UserMessage.toggleBlockUserSuccessfully };
+        } else {
+            return { status: 200, message: UserMessage.unBlockUserSuccessfully };
+        }
+    }
+    async getAllUsers(page: number): Promise<User[]> {
+        const pageSize = 10;
+        const skip = (page - 1) * pageSize;
+        return this.userModel.find({ role: { $in: [UserRole.RENTER, UserRole.LESSOR] } }).skip(skip).limit(pageSize).exec();
+
+    }
+    async getAllLessors(page: number): Promise<User[]> {
+        const pageSize = 10;
+        const skip = (page - 1) * pageSize;
+        return this.userModel.find({ role: UserRole.LESSOR }).skip(skip).limit(pageSize).exec();
+    }
+    async getAllBlogPostByUserId(userId: number, page: number): Promise<Blog[]> {
+        const pageSize = 10;
+        const skip = (page - 1) * pageSize;
+        const user = await this.userModel.findById(userId).populate('blogsPost');
+        if (!user) {
+            return [];
+        }
+        const blogPosts = user.blogsPost.slice(skip, skip + pageSize);
+        return blogPosts;
+    }
+
 }
