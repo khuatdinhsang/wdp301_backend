@@ -23,7 +23,7 @@ export class BlogService {
   constructor(
     @InjectModel(Blog.name) private blogModel: Model<Blog>,
     @InjectModel(User.name) private userModel: Model<User>,
-  ) {}
+  ) { }
   async createBlog(data: createBlogDTO, currentUser: JwtDecode): Promise<Blog> {
     let hasTag = '';
     switch (data.category) {
@@ -100,10 +100,10 @@ export class BlogService {
         Subject.BLOG,
         Content.NOT_PERMISSION,
         null,
-    );
-      
+      );
+
     }
-    const blogEdited = await this.blogModel.findByIdAndUpdate(id, {isAccepted: true}, {
+    const blogEdited = await this.blogModel.findByIdAndUpdate(id, { isAccepted: true }, {
       new: true,
     });
     return blogEdited;
@@ -115,16 +115,16 @@ export class BlogService {
   ) {
     const user = await this.userModel.findById(currentUser.id);
     if (!AuthGuardUser.isAdmin(user)) {
-      
+
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,
         Content.NOT_PERMISSION,
         null,
-    );
-      
+      );
+
     }
-    const blogEdited = await this.blogModel.findByIdAndUpdate(id, {isAccepted: false}, {
+    const blogEdited = await this.blogModel.findByIdAndUpdate(id, { isAccepted: false }, {
       new: true,
     });
     return blogEdited;
@@ -136,16 +136,16 @@ export class BlogService {
   ) {
     const user = await this.userModel.findById(currentUser.id);
 
-    if (!AuthGuardUser.isLessor(user)&& !AuthGuardUser.isAdmin(user)) {
+    if (!AuthGuardUser.isLessor(user) && !AuthGuardUser.isAdmin(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,
         Content.NOT_PERMISSION,
         null,
-    );
-      
+      );
+
     }
-    const blogEdited = await this.blogModel.findByIdAndUpdate(id, {isRented: true}, {
+    const blogEdited = await this.blogModel.findByIdAndUpdate(id, { isRented: true }, {
       new: true,
     });
     return blogEdited;
@@ -157,19 +157,18 @@ export class BlogService {
   ) {
     const user = await this.userModel.findById(currentUser.id);
 
-    if (!AuthGuardUser.isLessor(user)&& !AuthGuardUser.isAdmin(user)) {
+    if (!AuthGuardUser.isLessor(user) && !AuthGuardUser.isAdmin(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,
         Content.NOT_PERMISSION,
         null,
-    );
-      
+      );
+
     }
-    const blogEdited = await this.blogModel.findByIdAndUpdate(id, {isRented: false}, {
+    const blogEdited = await this.blogModel.findByIdAndUpdate(id, { isRented: false }, {
       new: true,
     });
     return blogEdited;
   }
-
 }

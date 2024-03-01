@@ -55,6 +55,12 @@ export class AuthService {
                 UserMessage.phoneNotExist
             )
         }
+        console.log("ads", userExist)
+        if (userExist.block.isBlock) {
+            throw new Error(
+                UserMessage.blockAccount
+            )
+        }
         const comparePassword = bcrypt.compareSync(password, userExist.password)
         if (!comparePassword) {
             throw new Error(
@@ -97,22 +103,22 @@ export class AuthService {
         const isFavorite = user.blogsFavorite.some(favoriteBlogId => favoriteBlogId.toString() === blogId.toString());
         if (isFavorite) {
             user.blogsFavorite = user.blogsFavorite.filter(blogId => blogId.toString() !== data.blogId);
-            blog.totalFavorite -= 1; 
+            blog.totalFavorite -= 1;
             await blog.save();
-        } else {                    
+        } else {
             user.blogsFavorite.push(blog);
-            blog.totalFavorite += 1; 
+            blog.totalFavorite += 1;
             await blog.save();
         }
         await user.save();
-        if(isFavorite){
+        if (isFavorite) {
             return ResponseHelper.response(
                 HttpStatus.OK,
                 Subject.UNFAVORITEBLOG,
                 Content.SUCCESSFULLY,
                 user,
             );
-        }else{
+        } else {
             return ResponseHelper.response(
                 HttpStatus.OK,
                 Subject.FAVORITEBLOG,
@@ -217,13 +223,13 @@ export class AuthService {
             if (!user) {
                 return { status: 404, message: UserMessage.userNotFound };
             }
-    
+
             user.block = {
                 isBlock: !user.block?.isBlock || false,
                 content: blockReason,
                 day: new Date(),
             };
-    
+
             await user.save();
             if (user.block?.isBlock) {
                 return { status: 200, message: UserMessage.toggleBlockUserSuccessfully };
@@ -256,11 +262,11 @@ export class AuthService {
         const blogPosts = user.blogsPost.slice(skip, skip + pageSize);
         return blogPosts;
     }
-    async getAllFavouriteBlogsByUserId(userId: number, page: number): Promise<Blog[]>{
-        const pageSize = 10; 
+    async getAllFavouriteBlogsByUserId(userId: number, page: number): Promise<Blog[]> {
+        const pageSize = 10;
         const skip = (page - 1) * pageSize;
         const user = (await this.userModel.findById(userId)).populate('blogsFavorite');
-        if(!user){
+        if (!user) {
             return [];
         }
         const favoriteBlog = (await user).blogsFavorite.slice(skip, skip + pageSize);
