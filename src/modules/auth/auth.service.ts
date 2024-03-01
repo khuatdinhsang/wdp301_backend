@@ -9,9 +9,7 @@ import { HttpEnum, JwtEnum, UserMessage, UserRole } from 'src/enums';
 import { LoginDTO, dataTypeLogin, editProfileDTO, ChangePasswordDTO, refreshTokenDTO, registerDTO } from './dto';
 import { JwtDecode, JwtPayload, Tokens } from './types';
 import { Jwt } from 'src/common/jwt';
-import { detailBlogDTO } from '../blog/dto';
 import { Blog } from '../blog/schemas/blog.schemas';
-import { skip } from 'node:test';
 import ResponseHelper from 'src/utils/respones.until';
 import { Subject } from 'src/enums/subject.enum';
 import { Content } from 'src/enums/content.enum';
@@ -212,10 +210,27 @@ export class AuthService {
     }
 
 
-    async getAllRenters(page: number): Promise<User[]> {
-        const pageSize = 10;
-        const skip = (page - 1) * pageSize;
-        return this.userModel.find({ role: UserRole.RENTER }).skip(skip).limit(pageSize).exec();
+    async getAllRenters(limit: number, page: number, search: string): Promise<any> {
+        const skipNumber = (page - 1) * limit;
+        const conditions = {
+            $or: [
+                { fullName: { $regex: search, $options: 'i' } },
+            ],
+            $and: [{ role: UserRole.RENTER }]
+        };
+        const searchQuery = search ? conditions : { role: UserRole.RENTER };
+        const totalRenter = await this.userModel.countDocuments(searchQuery)
+        const allRenter = await this.userModel
+            .find(searchQuery)
+            .skip(skipNumber)
+            .limit(limit)
+        const response = {
+            totalRenter,
+            allRenter,
+            currentPage: (page),
+            limit: (limit)
+        }
+        return response
     }
     async toggleBlockUser(userId: string, blockReason: string): Promise<{ status: number; message: string } | User> {
         try {

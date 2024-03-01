@@ -6,24 +6,25 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { BlogService } from './blog.service';
 import {
   ResponseBlog,
   createBlogDTO,
-  detailBlogDTO,
   editBlogDTO,
   getAllDTO,
-  preBlogDTO,
 } from './dto';
 import { BlogMessage } from 'src/enums';
 import { AuthGuardUser } from '../auth/auth.guard';
@@ -102,7 +103,7 @@ export class BlogController {
     }
   }
 
-  @Get('getAll/:category')
+  @Get('getAllAccepted/:category')
   @ApiParam({
     name: 'category',
     description: 'Category of the blog',
@@ -112,15 +113,21 @@ export class BlogController {
   @ApiOkResponse({
     type: () => ResponseBlog,
   })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'search', required: false })
   async getAllBlog(
     @Param() body: { category: getAllDTO },
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    @Query('search') search?: string,
   ): Promise<ResponseBlog> {
     const response = new ResponseBlog();
     try {
       response.setSuccess(
         HttpStatus.OK,
         BlogMessage.allBlogSuccess,
-        await this.blogService.getAllBlog(body.category),
+        await this.blogService.getAllBlog(body.category, limit, page, search),
       );
       return response;
     } catch (error) {

@@ -8,16 +8,14 @@ import { User } from '../auth/schemas/user.schemas';
 import { JwtDecode } from '../auth/types';
 import {
   createBlogDTO,
-  detailBlogDTO,
   editBlogDTO,
   getAllDTO,
-  preBlogDTO,
 } from './dto';
 import { Blog } from './schemas/blog.schemas';
 import ResponseHelper from 'src/utils/respones.until';
 import { Content } from 'src/enums/content.enum';
 import { Subject } from 'src/enums/subject.enum';
-
+import { LIMIT_DOCUMENT } from '../../contants'
 @Injectable({})
 export class BlogService {
   constructor(
@@ -55,12 +53,28 @@ export class BlogService {
     const blogDetail = await this.blogModel.findById(id);
     return blogDetail as Blog;
   }
-  async getAllBlog(category: getAllDTO): Promise<Blog[]> {
+  async getAllBlog(category: getAllDTO, limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
+    const skipNumber = (page - 1) * limit;
+    const conditions = {
+      $or: [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ],
+      $and: [{ category }, { isAccepted: true }]
+    };
+    const searchQuery = search ? conditions : { category, isAccepted: true };
+    const totalBlog = await this.blogModel.countDocuments(searchQuery)
     const allBlog = await this.blogModel
-      .find({ category, isAccepted: true })
-      .lean()
-      .exec();
-    return allBlog as Blog[];
+      .find(searchQuery)
+      .skip(skipNumber)
+      .limit(limit)
+    const response = {
+      totalBlog: totalBlog,
+      allBlog: allBlog,
+      currentPage: (page),
+      limit: (limit)
+    }
+    return response
   }
   async hiddenBlog(id: string): Promise<Blog> {
     const blog = await this.blogModel.findById(id);
