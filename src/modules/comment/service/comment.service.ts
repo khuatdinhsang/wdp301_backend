@@ -1,72 +1,85 @@
+/* eslint-disable prettier/prettier */
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { Content } from "src/enums/content.enum";
 import { Subject } from "src/enums/subject.enum";
-import { User } from "src/modules/auth/schemas/user.schemas";
-import { JwtDecode } from "src/modules/auth/types";
+import { UploadService } from "src/modules/common/upload/upload.service";
 import ResponseHelper from "src/utils/respones.until";
-import { CreateCommentDto, UpdateCommentDto } from "../dtos/comment.dto";
+import { createCommentDto, detailCommentDTO, getAllCommentDTO, updateCommentDto } from "../dtos/comment.dto";
 import { Comments } from "../schemas/comment.schema";
+import { LIMIT_DOCUMENT } from "src/contants";
 
 @Injectable({})
 export class CommentService {
     constructor(
-        @InjectModel(Comments.name) private commentModel: Model<Comments>,
-        @InjectModel(User.name) private userModel: Model<User>,
+        @InjectModel(Comments.name) private CommentModel: Model<Comments>,
+        private readonly uploadService: UploadService,
     ) { }
-    async create( data: CreateCommentDto, currentUser: JwtDecode ): Promise<Comments> {
-        const user = await this.userModel.findById(currentUser.id);
-        const createdComment = await this.commentModel.create({...data, userId: currentUser.id, fullname: currentUser.fullName, avt: user.avatar, time: new Date()})
-        return createdComment.toObject();
+    async create(data: createCommentDto): Promise<Comments> {
+        const fileName = await this.uploadService.uploadOneObject(data.file);
+        const createdBlogRate = await this.CommentModel.create({ ...data, file: fileName })
+        return createdBlogRate.toObject();
     }
-    async getAll(): Promise<Comments[]> {
-        const allComment = await this.commentModel.find().lean().exec()
-        return allComment as Comments[]
+    // async getAll(data: getAllCommentDTO): Promise<Comments[]> {
+    //     const allBlogRate = await this.CommentModel.find({ data }).lean().exec()
+    //     return allBlogRate as Comments[]
+    // }
+
+    async getAllByFeedbackId(feedbackId: string, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
+        const skipNumber = (page - 1) * limit;
+        const totalComment = await this.CommentModel.countDocuments({ feedbackId })
+        const allComment = await this.CommentModel
+            .find({ feedbackId })
+            .skip(skipNumber)
+            .limit(limit)
+        const response = {
+            totalComment,
+            allComment,
+            currentPage: (page),
+            limit: (limit)
+        }
+        return response
     }
-    async getAllByFeedbackId(feedbackId: string ): Promise<Comments[]> {
-        const allComment = await this.commentModel.find({ feedbackId }).lean().exec()
-        return allComment as Comments[]
-    }
-    async update(id: string, data: UpdateCommentDto) {
-        const comment = await this.commentModel.findById(id)
-        if(!comment){
+    async update(id: detailCommentDTO, data: updateCommentDto) {
+        const comment = await this.CommentModel.findById(id)
+        if (!comment) {
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
-                Subject.COMMENT,
+                Subject.FEEDBACK,
                 Content.NOT_FOUND,
                 null,
             );
         }
-        else{
-            const commentModify = { ...comment.toObject(), ...data }
-            const commentEdited = await this.commentModel.findByIdAndUpdate(id, commentModify, { new: true })
+        else {
+            const fileName = await this.uploadService.uploadOneObject(data.file);
+            const commentModify = { ...comment.toObject(), ...data, file: fileName }
+            const commentEdited = await this.CommentModel.findByIdAndUpdate(id, commentModify, { new: true })
             return ResponseHelper.response(
                 HttpStatus.OK,
-                Subject.COMMENT,
+                Subject.FEEDBACK,
                 Content.SUCCESSFULLY,
                 commentEdited,
             );
         }
     }
-    async delete(id: string){
-        const comment = await this.commentModel.findByIdAndDelete(id)
-        if(!comment){
+    async delete(id: detailCommentDTO) {
+        const comment = await this.CommentModel.findByIdAndDelete(id)
+        if (!comment) {
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
-                Subject.COMMENT,
+                Subject.FEEDBACK,
                 Content.NOT_FOUND,
                 null,
             );
         }
-        else{
+        else {
             return ResponseHelper.response(
                 HttpStatus.OK,
-                Subject.COMMENT,
+                Subject.FEEDBACK,
                 Content.SUCCESSFULLY,
                 comment,
             )
         }
     }
-
 }

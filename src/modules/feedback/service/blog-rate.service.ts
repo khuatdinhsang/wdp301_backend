@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
@@ -10,6 +11,7 @@ import ResponseHelper from "src/utils/respones.until";
 import { createBlogRateDto, updateBlogRateDto } from "../dtos/blog-rate.dto";
 import { Blog_Rate } from "../schema/blog-rate.schemas";
 import { User } from "src/modules/auth/schemas/user.schemas";
+import { LIMIT_DOCUMENT } from "src/contants";
 
 @Injectable({})
 export class BlogRateService {
@@ -19,10 +21,10 @@ export class BlogRateService {
         @InjectModel(User.name) private userModel: Model<User>,
         private readonly uploadService: UploadService,
     ) { }
-    async create( data: createBlogRateDto, currentUser: JwtDecode ): Promise<Blog_Rate> {
+    async create(data: createBlogRateDto, currentUser: JwtDecode): Promise<Blog_Rate> {
         const blogId = data.blogId;
         const user = await this.userModel.findById(currentUser.id);
-        const createdBlogRate = await this.blogRateModel.create({...data, userId: currentUser.id, fullname: currentUser.fullName, avt: user.avatar, time: new Date()})
+        const createdBlogRate = await this.blogRateModel.create({ ...data, userId: currentUser.id, fullname: currentUser.fullName, avt: user.avatar, time: new Date() })
         const allBlogRate = await this.blogRateModel.find({ blogId }).lean().exec()
         const totalStars = allBlogRate.reduce((total, rate) => total + rate.star, 0);
         const avgBlogRate = totalStars / allBlogRate.length;
@@ -33,23 +35,37 @@ export class BlogRateService {
         const allBlogRate = await this.blogRateModel.find().lean().exec()
         return allBlogRate as Blog_Rate[]
     }
-    async getAllByBlogId(blogId: string ): Promise<Blog_Rate[]> {
+    async getAllByBlogId(blogId: string, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
+        const skipNumber = (page - 1) * limit;
+        const totalFeedback = await this.blogModel.countDocuments({ blogId })
+        const allFeedback = await this.blogModel
+            .find({ blogId })
+            .skip(skipNumber)
+            .limit(limit)
+        const response = {
+            totalFeedback,
+            allFeedback,
+            currentPage: (page),
+            limit: (limit)
+        }
+        return response
+
         const allBlogRate = await this.blogRateModel.find({ blogId }).lean().exec()
         return allBlogRate as Blog_Rate[]
     }
     async CheckExistedBlog(blogId: string, currentUser: JwtDecode) {
         const userId = currentUser.id;
         const allBlogRate = await this.blogRateModel.findOne({ userId: userId, blogId: blogId }).lean().exec()
-        if(allBlogRate){
+        if (allBlogRate) {
             return true
         }
-        else{
+        else {
             return false
         }
     }
     async update(id: string, data: updateBlogRateDto) {
         const blogRate = await this.blogRateModel.findById(id)
-        if(!blogRate){
+        if (!blogRate) {
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
                 Subject.FEEDBACK,
@@ -57,16 +73,16 @@ export class BlogRateService {
                 null,
             );
         }
-        else{
+        else {
             const blogRateModify = { ...blogRate.toObject(), ...data }
             const blogRateEdited = await this.blogRateModel.findByIdAndUpdate(id, blogRateModify, { new: true })
-            
+
             const blogId = blogRate.blogId
             const allBlogRate = await this.blogRateModel.find({ blogId }).lean().exec()
-            if(allBlogRate.length == 0){
+            if (allBlogRate.length == 0) {
                 await this.blogModel.findByIdAndUpdate(blogId, { avgBlogRate: 0 }).exec();
             }
-            else{
+            else {
                 const totalStars = allBlogRate.reduce((total, rate) => total + rate.star, 0);
                 const avgBlogRate = totalStars / allBlogRate.length;
                 await this.blogModel.findByIdAndUpdate(blogId, { avgBlogRate: avgBlogRate }).exec();
@@ -79,9 +95,9 @@ export class BlogRateService {
             );
         }
     }
-    async delete(id: string){
+    async delete(id: string) {
         const blogRate = await this.blogRateModel.findByIdAndDelete(id)
-        if(!blogRate){
+        if (!blogRate) {
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
                 Subject.FEEDBACK,
@@ -89,13 +105,13 @@ export class BlogRateService {
                 null,
             );
         }
-        else{
+        else {
             const blogId = blogRate.blogId
             const allBlogRate = await this.blogRateModel.find({ blogId }).lean().exec()
-            if(allBlogRate.length == 0){
+            if (allBlogRate.length == 0) {
                 await this.blogModel.findByIdAndUpdate(blogId, { avgBlogRate: 0 }).exec();
             }
-            else{
+            else {
                 const totalStars = allBlogRate.reduce((total, rate) => total + rate.star, 0);
                 const avgBlogRate = totalStars / allBlogRate.length;
                 await this.blogModel.findByIdAndUpdate(blogId, { avgBlogRate: avgBlogRate }).exec();
