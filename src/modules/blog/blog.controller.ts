@@ -86,15 +86,21 @@ export class BlogController {
   @ApiOkResponse({
     type: () => ResponseBlog,
   })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'search', required: false })
   async getAllBlogAdmin(
     @CurrentUser() currentUser: JwtDecode,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    @Query('search') search?: string,
   ): Promise<ResponseBlog> {
     const response = new ResponseBlog();
     try {
       response.setSuccess(
         HttpStatus.OK,
         BlogMessage.allBlogSuccess,
-        await this.blogService.getAllBlogAdmin(currentUser),
+        await this.blogService.getAllBlogAdmin(currentUser, limit, page, search),
       );
       return response;
     } catch (error) {
@@ -116,7 +122,7 @@ export class BlogController {
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'search', required: false })
-  async getAllBlog(
+  async getAllBlogAccepted(
     @Param() body: { category: getAllDTO },
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
     @Query('page', new ParseIntPipe({ optional: true })) page: number,
@@ -127,7 +133,7 @@ export class BlogController {
       response.setSuccess(
         HttpStatus.OK,
         BlogMessage.allBlogSuccess,
-        await this.blogService.getAllBlog(body.category, limit, page, search),
+        await this.blogService.getAllBlogAccepted(body.category, limit, page, search),
       );
       return response;
     } catch (error) {

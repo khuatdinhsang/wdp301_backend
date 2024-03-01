@@ -205,15 +205,22 @@ export class AuthController {
     }
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
-    @Get('/getAllUsers/:page')
-    async getAllUsers(@CurrentUser() currentUser: JwtDecode, @Query('page') page: number): Promise<User[]> {
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
+    @ApiQuery({ name: 'search', required: false })
+    @Get('/getAllUsers')
+    async getAllUsers(@CurrentUser() currentUser: JwtDecode,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+        @Query('page', new ParseIntPipe({ optional: true })) page: number,
+        @Query('search') search?: string,
+    ): Promise<User[]> {
         try {
             const isAdmin = currentUser.role === 'admin';
             if (!isAdmin) {
                 throw new Error(UserMessage.isNotAdmin);
             }
 
-            const renters = await this.authService.getAllUsers(page);
+            const renters = await this.authService.getAllUsers(limit, page, search);
             return renters;
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -246,14 +253,22 @@ export class AuthController {
 
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
-    @Get('/getAllLessors/:page')
-    async getAllLessors(@CurrentUser() currentUser: JwtDecode, @Query('page') page: number): Promise<User[]> {
+    @Get('/getAllLessors')
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
+    @ApiQuery({ name: 'search', required: false })
+    async getAllLessors(@CurrentUser() currentUser: JwtDecode,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+        @Query('page', new ParseIntPipe({ optional: true })) page: number,
+        @Query('search') search?: string,
+
+    ): Promise<User[]> {
         try {
             const isAdmin = currentUser.role === 'admin';
             if (!isAdmin) {
                 throw new Error(UserMessage.isNotAdmin);
             }
-            const renters = await this.authService.getAllLessors(page);
+            const renters = await this.authService.getAllLessors(limit, page, search);
             return renters;
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -261,10 +276,17 @@ export class AuthController {
     }
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
-    @Get('/getAllBlogsPost/:page')
-    async getAllBlogPostByUser(@Query('page') page: number, @CurrentUser() currentUser: JwtDecode): Promise<Blog[]> {
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
+    @ApiQuery({ name: 'search', required: false })
+    @Get('/getAllBlogsPost')
+    async getAllBlogPostByUser(@CurrentUser() currentUser: JwtDecode,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+        @Query('page', new ParseIntPipe({ optional: true })) page: number,
+        @Query('search') search?: string,
+    ): Promise<Blog[]> {
         try {
-            const blogPosts = await this.authService.getAllBlogPostByUserId(currentUser.id, page);
+            const blogPosts = await this.authService.getAllBlogPostByUserId(currentUser.id, limit, page, search);
             return blogPosts;
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -273,10 +295,16 @@ export class AuthController {
 
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
-    @Get('/getAllFavoriteBlogs/:page')
-    async getAllFavouriteBlogsByUser(@Query('page') page: number, @CurrentUser() currentUser: JwtDecode): Promise<Blog[]> {
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
+    @Get('/getAllFavoriteBlogs')
+    async getAllFavouriteBlogsByUser(
+        @CurrentUser() currentUser: JwtDecode,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+        @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    ): Promise<Blog[]> {
         try {
-            const favoriteBlog = await this.authService.getAllFavouriteBlogsByUserId(currentUser.id, page);
+            const favoriteBlog = await this.authService.getAllFavouriteBlogsByUserId(currentUser.id, limit, page);
             return favoriteBlog;
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);

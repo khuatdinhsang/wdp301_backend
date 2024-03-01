@@ -53,7 +53,7 @@ export class BlogService {
     const blogDetail = await this.blogModel.findById(id);
     return blogDetail as Blog;
   }
-  async getAllBlog(category: getAllDTO, limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
+  async getAllBlogAccepted(category: getAllDTO, limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
     const skipNumber = (page - 1) * limit;
     const conditions = {
       $or: [
@@ -94,13 +94,31 @@ export class BlogService {
     return blogEdited as Blog;
   }
 
-  async getAllBlogAdmin(currentUser: JwtDecode) {
+  async getAllBlogAdmin(currentUser: JwtDecode, limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
     const user = await this.userModel.findById(currentUser.id);
     if (!AuthGuardUser.isAdmin(user)) {
       return null;
     }
-    const allBlog = await this.blogModel.find().lean().exec();
-    return allBlog as Blog[];
+    const skipNumber = (page - 1) * limit;
+    const conditions = {
+      $or: [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ],
+    };
+    const searchQuery = search ? conditions : null;
+    const totalBlog = await this.blogModel.countDocuments(searchQuery)
+    const allBlog = await this.blogModel
+      .find(searchQuery)
+      .skip(skipNumber)
+      .limit(limit)
+    const response = {
+      totalBlog: totalBlog,
+      allBlog: allBlog,
+      currentPage: (page),
+      limit: (limit)
+    }
+    return response
   }
 
   async acceptBlog(
