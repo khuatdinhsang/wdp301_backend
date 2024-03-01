@@ -185,7 +185,7 @@ export class BlogController {
     type: () => ResponseBlog,
   })
   async acceptOrDeclineBlog(
-    @Param('id') id: detailBlogDTO,
+    @Param('id') id: string,
     @Body() body: preBlogDTO,
     @CurrentUser() currentUser: JwtDecode,
   ): Promise<ResponseBlog> {

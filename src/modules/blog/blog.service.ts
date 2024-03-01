@@ -87,7 +87,7 @@ export class BlogService {
   }
 
   async acceptOrDeclineBlog(
-    id: detailBlogDTO,
+    id: string,
     payload: preBlogDTO,
     currentUser: JwtDecode,
   ) {
