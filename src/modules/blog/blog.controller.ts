@@ -187,7 +187,6 @@ export class BlogController {
 
   async acceptBlog(
     @Param('id') id: string,
-    @Body() body: preBlogDTO,
     @CurrentUser() currentUser: JwtDecode,
   ) {
     const response = new ResponseBlog();
