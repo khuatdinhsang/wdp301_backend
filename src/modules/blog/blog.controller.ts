@@ -23,10 +23,8 @@ import { BlogService } from './blog.service';
 import {
   ResponseBlog,
   createBlogDTO,
-  detailBlogDTO,
   editBlogDTO,
   getAllDTO,
-  preBlogDTO,
 } from './dto';
 import { BlogMessage } from 'src/enums';
 import { AuthGuardUser } from '../auth/auth.guard';

@@ -8,10 +8,8 @@ import { User } from '../auth/schemas/user.schemas';
 import { JwtDecode } from '../auth/types';
 import {
   createBlogDTO,
-  detailBlogDTO,
   editBlogDTO,
   getAllDTO,
-  preBlogDTO,
 } from './dto';
 import { Blog } from './schemas/blog.schemas';
 import ResponseHelper from 'src/utils/respones.until';
@@ -62,8 +60,8 @@ export class BlogService {
         { title: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } },
       ],
+      $and: [{ category }, { isAccepted: true }]
     };
-    console.log("search", search)
     const searchQuery = search ? conditions : { category, isAccepted: true };
     const totalBlog = await this.blogModel.countDocuments(searchQuery)
     const allBlog = await this.blogModel

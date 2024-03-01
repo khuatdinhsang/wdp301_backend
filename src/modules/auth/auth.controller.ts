@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards, Param, Query, HttpException } from "@nestjs/common";
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards, Param, Query, HttpException, ParseIntPipe } from "@nestjs/common";
+import { ApiBearerAuth, ApiOkResponse, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
 import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO, ResponseToggleBlockUser } from "./dto";
@@ -107,6 +107,7 @@ export class AuthController {
     @Get('google/login')
     @UseGuards(GoogleAuthGuard)
     async googleAuth(@Req() req) {
+        console.log(req)
     }
 
     @Get('google/callback')
@@ -136,10 +137,7 @@ export class AuthController {
         }
         return response
     }
-
-    // làm tiếp  getDetailUser,editUser, changePassword
-    // getALLUsers --> admin có quyền truy cập, những role khác k có quyền 
-    @UseGuards(AuthGuardUser)
+    // @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Get('profile')
     async profileDetail(@CurrentUser() currentUser: JwtDecode): Promise<ResponseProfileDetail> {
@@ -184,15 +182,22 @@ export class AuthController {
 
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
-    @Get('/getAllRenter/:page')
-    async getAllRenters(@CurrentUser() currentUser: JwtDecode, @Query('page') page: number): Promise<User[]> {
+    @Get('/getAllRenter')
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
+    @ApiQuery({ name: 'search', required: false })
+    async getAllRenters(@CurrentUser() currentUser: JwtDecode,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+        @Query('page', new ParseIntPipe({ optional: true })) page: number,
+        @Query('search') search?: string,
+    ): Promise<User[]> {
         try {
             const isAdmin = currentUser.role === 'admin';
             if (!isAdmin) {
                 throw new Error(UserMessage.isNotAdmin);
             }
 
-            const renters = await this.authService.getAllRenters(page);
+            const renters = await this.authService.getAllRenters(limit, page, search);
             return renters;
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -222,7 +227,7 @@ export class AuthController {
 
         try {
             const { blockReason } = dto;
-            const result = await this.authService.toggleBlockUser(userId, blockReason); 
+            const result = await this.authService.toggleBlockUser(userId, blockReason);
             if ('status' in result) {
                 response.setError(result.status, result.message);
             } else {
@@ -238,7 +243,7 @@ export class AuthController {
         return response;
     }
 
-  
+
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Get('/getAllLessors/:page')
@@ -265,11 +270,11 @@ export class AuthController {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Get('/getAllFavoriteBlogs/:page')
-    async getAllFavouriteBlogsByUser(@Query('page') page: number, @CurrentUser() currentUser: JwtDecode): Promise<Blog[]>{
+    async getAllFavouriteBlogsByUser(@Query('page') page: number, @CurrentUser() currentUser: JwtDecode): Promise<Blog[]> {
         try {
             const favoriteBlog = await this.authService.getAllFavouriteBlogsByUserId(currentUser.id, page);
             return favoriteBlog;
