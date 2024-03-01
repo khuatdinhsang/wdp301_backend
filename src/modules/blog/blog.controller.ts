@@ -184,8 +184,10 @@ export class BlogController {
   @ApiOkResponse({
     type: () => ResponseBlog,
   })
-  async acceptBlog(
+
+  async acceptOrDeclineBlog(
     @Param('id') id: string,
+    @Body() body: preBlogDTO,
     @CurrentUser() currentUser: JwtDecode,
   ) {
     const response = new ResponseBlog();

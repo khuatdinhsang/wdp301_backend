@@ -12,6 +12,7 @@ import { GoogleAuthGuard } from "./google.guard";
 import { FacebookAuthGuard } from "./facebook.guard";
 import { User } from "./schemas/user.schemas";
 import { Blog } from "../blog/schemas/blog.schemas";
+import { ToggleBlockUserDTO } from "./dto/toggleBlockUser.dto";
 @ApiTags('Auth')
 @Controller("auth")
 export class AuthController {
@@ -68,15 +69,16 @@ export class AuthController {
     @ApiOkResponse({
         type: () => ResponseFavoriteBlog,
     })
-    async favoriteBlog(@Body() body: detailBlogDTO, @CurrentUser() currentUser: JwtDecode): Promise<any> {
-        const response = new ResponseFavoriteBlog()
+    async favoriteBlog(@Body() body: detailBlogDTO, @CurrentUser() currentUser: JwtDecode) {
+        const response = new ResponseFavoriteBlog();
         try {
-            response.setSuccess(HttpStatus.OK, UserMessage.favoriteBlogSuccess, await this.authService.favoriteBlog(body, currentUser))
-            return response
+            const fvrBlog = await this.authService.favoriteBlog({ blogId: body.id }, currentUser);
+            return fvrBlog
         } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
-            return response
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+            return response;
         }
+
     }
     @Post('editProfile')
     @UseGuards(AuthGuardUser)
@@ -104,7 +106,8 @@ export class AuthController {
 
     @Get('google/login')
     @UseGuards(GoogleAuthGuard)
-    async googleAuth() { }
+    async googleAuth(@Req() req) {
+    }
 
     @Get('google/callback')
     @UseGuards(GoogleAuthGuard)
@@ -214,32 +217,28 @@ export class AuthController {
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Post(':userId/toggleBlock')
-    async toggleBlockUser(@Param('userId') userId: string, @CurrentUser() currentUser: JwtDecode): Promise<ResponseToggleBlockUser> {
+    async toggleBlockUser(@Param('userId') userId: string, @Body() dto: ToggleBlockUserDTO): Promise<ResponseToggleBlockUser> {
         const response = new ResponseToggleBlockUser();
 
         try {
-            const isAdmin = currentUser.role === 'admin';
-            if (!isAdmin) {
-                throw new Error(UserMessage.isNotAdmin)
-            }
-
-            const result = await this.authService.toggleBlockUser(userId);
+            const { blockReason } = dto;
+            const result = await this.authService.toggleBlockUser(userId, blockReason); 
             if ('status' in result) {
                 response.setError(result.status, result.message);
-                return response;
             } else {
-                const response = new ResponseToggleBlockUser();
                 response.isSuccess = true;
                 response.statusCode = HttpStatus.OK;
                 response.message = UserMessage.toggleBlockUserSuccessfully;
                 response.user = result;
-                return response;
             }
         } catch (error) {
             response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
-            return response;
         }
+
+        return response;
     }
+
+  
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Get('/getAllLessors/:page')
@@ -262,6 +261,18 @@ export class AuthController {
         try {
             const blogPosts = await this.authService.getAllBlogPostByUserId(currentUser.id, page);
             return blogPosts;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('/getAllFavoriteBlogs/:page')
+    async getAllFavouriteBlogsByUser(@Query('page') page: number, @CurrentUser() currentUser: JwtDecode): Promise<Blog[]>{
+        try {
+            const favoriteBlog = await this.authService.getAllFavouriteBlogsByUserId(currentUser.id, page);
+            return favoriteBlog;
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }

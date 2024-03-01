@@ -9,17 +9,22 @@ import * as path from 'path';
 import cookieParser from 'cookie-parser';
 // import * as formData from 'express-form-data';
 async function bootstrap() {
+
   // const app = await NestFactory.create(AppModule);
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { cors: true });
   // set path api
   app.setGlobalPrefix(`api`);
-
   // set cors
   app.enableCors({
-    origin: ['http://localhost:3000'],
-    methods: ['*'],
-    credentials: true,
+    origin: "*",
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    // allowed headers
+    allowedHeaders: ['Content-Type', 'Origin', 'X-Requested-With', 'Accept', 'Authorization'],
+    // headers exposed to the client
+    exposedHeaders: ['Authorization'],
+    credentials: true
   });
+
   // app.use(formData.parse());
   // config swagger
   swaggerConfig(app);

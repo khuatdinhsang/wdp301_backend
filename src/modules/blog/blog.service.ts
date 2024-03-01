@@ -89,8 +89,9 @@ export class BlogService {
     return allBlog as Blog[];
   }
 
-  async acceptBlog(
+  async acceptOrDeclineBlog(
     id: string,
+    payload: preBlogDTO,
     currentUser: JwtDecode,
   ) {
     const user = await this.userModel.findById(currentUser.id);

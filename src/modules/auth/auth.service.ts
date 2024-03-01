@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './schemas/user.schemas';
 import * as bcrypt from 'bcrypt';
@@ -12,6 +12,9 @@ import { Jwt } from 'src/common/jwt';
 import { detailBlogDTO } from '../blog/dto';
 import { Blog } from '../blog/schemas/blog.schemas';
 import { skip } from 'node:test';
+import ResponseHelper from 'src/utils/respones.until';
+import { Subject } from 'src/enums/subject.enum';
+import { Content } from 'src/enums/content.enum';
 @Injectable({})
 export class AuthService {
     constructor(
@@ -78,11 +81,48 @@ export class AuthService {
         await this.userModel.findByIdAndUpdate(user._id, { $set: { refreshToken: tokens.refreshToken } }, { new: true })
         return tokens
     }
-    async favoriteBlog(data: detailBlogDTO, currentUser: JwtDecode): Promise<any> {
-        const user = await this.userModel.findById(currentUser.id)
-        const userUpdated = await this.userModel.findByIdAndUpdate(currentUser.id, { $set: { blogsFavorite: [...user.blogsFavorite, data.id] } }, { new: true })
-        await this.blogModel.findByIdAndUpdate(data.id, { $set: { totalFavorite: userUpdated.blogsFavorite.length } }, { new: true })
+
+
+    async favoriteBlog(data: { blogId: string }, currentUser: JwtDecode) {
+        // Tìm người dùng hiện tại
+        const user = await this.userModel.findById(currentUser.id);
+        if (!user) {
+            throw new Error(UserMessage.userNotFound);
+        }
+        const blog = await this.blogModel.findById(data.blogId);
+        if (!blog) {
+            throw new Error(UserMessage.blogNotFound);
+        }
+        const blogId = new mongoose.Types.ObjectId(data.blogId);
+        const isFavorite = user.blogsFavorite.some(favoriteBlogId => favoriteBlogId.toString() === blogId.toString());
+        if (isFavorite) {
+            user.blogsFavorite = user.blogsFavorite.filter(blogId => blogId.toString() !== data.blogId);
+            blog.totalFavorite -= 1; 
+            await blog.save();
+        } else {                    
+            user.blogsFavorite.push(blog);
+            blog.totalFavorite += 1; 
+            await blog.save();
+        }
+        await user.save();
+        if(isFavorite){
+            return ResponseHelper.response(
+                HttpStatus.OK,
+                Subject.UNFAVORITEBLOG,
+                Content.SUCCESSFULLY,
+                user,
+            );
+        }else{
+            return ResponseHelper.response(
+                HttpStatus.OK,
+                Subject.FAVORITEBLOG,
+                Content.SUCCESSFULLY,
+                user,
+            );
+        }
     }
+
+
     async getTokens(payload: JwtPayload): Promise<Tokens> {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
@@ -119,7 +159,7 @@ export class AuthService {
             user.email = data.email || user.email;
             user.avatar = data.avatar || user.avatar;
             user.address = data.address || user.address;
-            user.phone = data.phone || user.phone;
+            user.gender = data.gender || user.gender;
 
             const updatedUser = await user.save();
 
@@ -171,23 +211,28 @@ export class AuthService {
         const skip = (page - 1) * pageSize;
         return this.userModel.find({ role: UserRole.RENTER }).skip(skip).limit(pageSize).exec();
     }
-    async toggleBlockUser(userId: string): Promise<{ status: number; message: string } | User> {
-        const user = await this.userModel.findById(userId);
-        if (!user) {
-            return { status: 404, message: UserMessage.userNotFound };
-        }
+    async toggleBlockUser(userId: string, blockReason: string): Promise<{ status: number; message: string } | User> {
+        try {
+            const user = await this.userModel.findById(userId);
+            if (!user) {
+                return { status: 404, message: UserMessage.userNotFound };
+            }
     
-        user.block = {
-            isBlock: !user.block?.isBlock || false,
-            content: user.block?.content ,
-            day: new Date(),
-        };
+            user.block = {
+                isBlock: !user.block?.isBlock || false,
+                content: blockReason,
+                day: new Date(),
+            };
     
-        await user.save(); 
-        if (user.block?.isBlock) {
-            return { status: 200, message: UserMessage.toggleBlockUserSuccessfully };
-        } else {
-            return { status: 200, message: UserMessage.unBlockUserSuccessfully };
+            await user.save();
+            if (user.block?.isBlock) {
+                return { status: 200, message: UserMessage.toggleBlockUserSuccessfully };
+            } else {
+                return { status: 200, message: UserMessage.unBlockUserSuccessfully };
+            }
+        } catch (error) {
+            console.error("Error toggling block status:", error);
+            return { status: 500, message: "Internal server error" };
         }
     }
     async getAllUsers(page: number): Promise<User[]> {
@@ -210,6 +255,16 @@ export class AuthService {
         }
         const blogPosts = user.blogsPost.slice(skip, skip + pageSize);
         return blogPosts;
+    }
+    async getAllFavouriteBlogsByUserId(userId: number, page: number): Promise<Blog[]>{
+        const pageSize = 10; 
+        const skip = (page - 1) * pageSize;
+        const user = (await this.userModel.findById(userId)).populate('blogsFavorite');
+        if(!user){
+            return [];
+        }
+        const favoriteBlog = (await user).blogsFavorite.slice(skip, skip + pageSize);
+        return favoriteBlog;
     }
 
 }
