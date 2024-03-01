@@ -1,9 +1,9 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards, Param, Query, HttpException } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
-import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword,  registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO, ResponseToggleBlockUser } from "./dto";
+import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO, ResponseToggleBlockUser } from "./dto";
 import { CurrentUser } from "./decorator/user.decorator";
 import { AuthGuardUser } from "./auth.guard";
 import { JwtDecode } from "./types";
@@ -11,6 +11,8 @@ import { detailBlogDTO } from "../blog/dto";
 import { GoogleAuthGuard } from "./google.guard";
 import { FacebookAuthGuard } from "./facebook.guard";
 import { User } from "./schemas/user.schemas";
+import { Blog } from "../blog/schemas/blog.schemas";
+import { ToggleBlockUserDTO } from "./dto/toggleBlockUser.dto";
 @ApiTags('Auth')
 @Controller("auth")
 export class AuthController {
@@ -67,15 +69,16 @@ export class AuthController {
     @ApiOkResponse({
         type: () => ResponseFavoriteBlog,
     })
-    async favoriteBlog(@Body() body: detailBlogDTO, @CurrentUser() currentUser: JwtDecode): Promise<any> {
-        const response = new ResponseFavoriteBlog()
+    async favoriteBlog(@Body() body: detailBlogDTO, @CurrentUser() currentUser: JwtDecode) {
+        const response = new ResponseFavoriteBlog();
         try {
-            response.setSuccess(HttpStatus.OK, UserMessage.favoriteBlogSuccess, await this.authService.favoriteBlog(body, currentUser))
-            return response
+            const fvrBlog = await this.authService.favoriteBlog({ blogId: body.id }, currentUser);
+            return fvrBlog
         } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
-            return response
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+            return response;
         }
+
     }
     @Post('editProfile')
     @UseGuards(AuthGuardUser)
@@ -93,15 +96,18 @@ export class AuthController {
             if (error.message === UserMessage.phoneExist) {
                 response.setError(HttpStatus.BAD_REQUEST, UserMessage.phoneExist);
             } else {
+                console.log(error.message);
+
                 response.setError(HttpStatus.INTERNAL_SERVER_ERROR, UserMessage.editUserProfileFail);
             }
             return response;
         }
     }
-    
+
     @Get('google/login')
     @UseGuards(GoogleAuthGuard)
-    async googleAuth() { }
+    async googleAuth(@Req() req) {
+    }
 
     @Get('google/callback')
     @UseGuards(GoogleAuthGuard)
@@ -152,34 +158,124 @@ export class AuthController {
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Post('changePassword')
-    async changePassword(@CurrentUser() currentUser: JwtDecode, @Body() changePasswordDto: ChangePasswordDTO): Promise<ResponseChangePassword> {
+    async changePassword(
+        @CurrentUser() currentUser: JwtDecode,
+        @Body() changePasswordDto: ChangePasswordDTO
+    ): Promise<ResponseChangePassword> {
         try {
-            const success = await this.authService.changePassword(currentUser.id, changePasswordDto);
-            if (!success) {
-                const response: ResponseChangePassword = new ResponseChangePassword();
-                response.setError(HttpStatus.BAD_REQUEST, UserMessage.changePasswordFail);
-                return response;
-            }
+            const result = await this.authService.changePassword(currentUser.id, changePasswordDto);
 
             const response: ResponseChangePassword = new ResponseChangePassword();
             response.isSuccess = true;
             response.statusCode = HttpStatus.OK;
-            response.message = UserMessage.changePasswordSuccess;
+            response.message = result.message;
+            // Kiểm tra nếu có user được trả về từ service, thêm user vào response
+            if (result.user) {
+                response.user = result.user;
+            }
             return response;
         } catch (error) {
-            console.error(error);
-            throw new Error(UserMessage.changePasswordFail);
+            const response: ResponseChangePassword = new ResponseChangePassword();
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, UserMessage.changePasswordFail);
+            return response;
         }
     }
 
+
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
-    @Get('getAllRenter')
-    async getAllRenters(@CurrentUser() currentUser: JwtDecode): Promise<User[]> {
-        const isAdmin = currentUser.role === 'admin';
-        if (!isAdmin) {
-            throw new Error(UserMessage.isNotAdmin)
+    @Get('/getAllRenter/:page')
+    async getAllRenters(@CurrentUser() currentUser: JwtDecode, @Query('page') page: number): Promise<User[]> {
+        try {
+            const isAdmin = currentUser.role === 'admin';
+            if (!isAdmin) {
+                throw new Error(UserMessage.isNotAdmin);
+            }
+
+            const renters = await this.authService.getAllRenters(page);
+            return renters;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return this.authService.getAllRenters();
     }
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('/getAllUsers/:page')
+    async getAllUsers(@CurrentUser() currentUser: JwtDecode, @Query('page') page: number): Promise<User[]> {
+        try {
+            const isAdmin = currentUser.role === 'admin';
+            if (!isAdmin) {
+                throw new Error(UserMessage.isNotAdmin);
+            }
+
+            const renters = await this.authService.getAllUsers(page);
+            return renters;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Post(':userId/toggleBlock')
+    async toggleBlockUser(@Param('userId') userId: string, @Body() dto: ToggleBlockUserDTO): Promise<ResponseToggleBlockUser> {
+        const response = new ResponseToggleBlockUser();
+
+        try {
+            const { blockReason } = dto;
+            const result = await this.authService.toggleBlockUser(userId, blockReason); 
+            if ('status' in result) {
+                response.setError(result.status, result.message);
+            } else {
+                response.isSuccess = true;
+                response.statusCode = HttpStatus.OK;
+                response.message = UserMessage.toggleBlockUserSuccessfully;
+                response.user = result;
+            }
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+        }
+
+        return response;
+    }
+
+  
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('/getAllLessors/:page')
+    async getAllLessors(@CurrentUser() currentUser: JwtDecode, @Query('page') page: number): Promise<User[]> {
+        try {
+            const isAdmin = currentUser.role === 'admin';
+            if (!isAdmin) {
+                throw new Error(UserMessage.isNotAdmin);
+            }
+            const renters = await this.authService.getAllLessors(page);
+            return renters;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('/getAllBlogsPost/:page')
+    async getAllBlogPostByUser(@Query('page') page: number, @CurrentUser() currentUser: JwtDecode): Promise<Blog[]> {
+        try {
+            const blogPosts = await this.authService.getAllBlogPostByUserId(currentUser.id, page);
+            return blogPosts;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('/getAllFavoriteBlogs/:page')
+    async getAllFavouriteBlogsByUser(@Query('page') page: number, @CurrentUser() currentUser: JwtDecode): Promise<Blog[]>{
+        try {
+            const favoriteBlog = await this.authService.getAllFavouriteBlogsByUserId(currentUser.id, page);
+            return favoriteBlog;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

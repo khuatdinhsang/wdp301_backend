@@ -49,8 +49,6 @@ export class BlogRateController{
 
     @Get('GetAll')
     @HttpCode(200)
-    @UseGuards(AuthGuardUser)
-    @ApiBearerAuth('JWT-auth')
     @ApiOkResponse({
         type: () => ResponseHelper,
     })
@@ -173,7 +171,7 @@ export class BlogRateController{
                 Subject.FEEDBACK,
                 Content.FAILED,
                 error,
-                Field.UPDATE
+                Field.DELETE
             )
         }
     }

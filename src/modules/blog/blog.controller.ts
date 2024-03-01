@@ -184,22 +184,88 @@ export class BlogController {
   @ApiOkResponse({
     type: () => ResponseBlog,
   })
+
   async acceptOrDeclineBlog(
     @Param('id') id: string,
     @Body() body: preBlogDTO,
     @CurrentUser() currentUser: JwtDecode,
-  ): Promise<ResponseBlog> {
+  ) {
     const response = new ResponseBlog();
     try {
-      response.setSuccess(
-        HttpStatus.OK,
-        BlogMessage.updateBlogSuccess,
-        await this.blogService.acceptOrDeclineBlog(id, body, currentUser),
-      );
-      return response;
+      const result = await this.blogService.acceptBlog(id, currentUser)
+      return result;
     } catch (error) {
       response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
       return response;
     }
   }
+
+
+  @Put('BlogDecline/:id')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({ name: 'id', description: 'ID of the blog' })
+  @HttpCode(200)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  async declineBlog(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: JwtDecode,
+  ){
+    const response = new ResponseBlog();
+    try {
+      const result = await this.blogService.declineBlog(id, currentUser)
+      return result;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+
+  @Put('BlogRented/:id')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({ name: 'id', description: 'ID of the blog' })
+  @HttpCode(200)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  async blogRented(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: JwtDecode,
+  ){
+    const response = new ResponseBlog();
+    try {
+      const result = await this.blogService.blogRented(id, currentUser)
+      return result;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+
+
+  @Put('BlogUnrented/:id')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({ name: 'id', description: 'ID of the blog' })
+  @HttpCode(200)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  async blogUnrented(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: JwtDecode,
+  ){
+    const response = new ResponseBlog();
+    try {
+      const result = await this.blogService.blogUnrented(id, currentUser)
+      return result;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+
 }
