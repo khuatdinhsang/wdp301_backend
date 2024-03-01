@@ -115,7 +115,7 @@ export class BlogService {
   ) {
     const user = await this.userModel.findById(currentUser.id);
     if (!AuthGuardUser.isAdmin(user)) {
-      
+
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,

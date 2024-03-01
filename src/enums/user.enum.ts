@@ -14,7 +14,7 @@ export enum UserMessage {
     favoriteBlogSuccess = "Favorite Blog successfully",
     editUserProfileFail = "Edit Profile failed",
     editProfileSuccess = "Edit Profile successfully",
-    userNotFound = 
+    userNotFound =
     "User does not exist",
     profileDetailSuccess = "Get profile successfully",
     changePasswordFail = "Change password failed",
@@ -26,7 +26,8 @@ export enum UserMessage {
     unBlockUserSuccessfully = "Unblock User Successfully",
     FavouriteBlogSuccessfully = "Favourite Blog Successfully",
     UnFavouriteBlogSuccessfully = "UnFavourite Blog Successfully",
-    blogNotFound = "Blog Not Found"
-    
-    
+    blogNotFound = "Blog Not Found",
+    blockAccount = "Your account is currently locked"
+
+
 }
