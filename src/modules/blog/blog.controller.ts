@@ -32,7 +32,7 @@ import { JwtDecode } from '../auth/types';
 @ApiTags('Blog')
 @Controller('blog')
 export class BlogController {
-  constructor(private blogService: BlogService) {}
+  constructor(private blogService: BlogService) { }
   @Post('create')
   @HttpCode(200)
   @UseGuards(AuthGuardUser)
@@ -212,7 +212,7 @@ export class BlogController {
   async declineBlog(
     @Param('id') id: string,
     @CurrentUser() currentUser: JwtDecode,
-  ){
+  ) {
     const response = new ResponseBlog();
     try {
       const result = await this.blogService.declineBlog(id, currentUser)
@@ -234,7 +234,7 @@ export class BlogController {
   async blogRented(
     @Param('id') id: string,
     @CurrentUser() currentUser: JwtDecode,
-  ){
+  ) {
     const response = new ResponseBlog();
     try {
       const result = await this.blogService.blogRented(id, currentUser)
@@ -257,7 +257,7 @@ export class BlogController {
   async blogUnrented(
     @Param('id') id: string,
     @CurrentUser() currentUser: JwtDecode,
-  ){
+  ) {
     const response = new ResponseBlog();
     try {
       const result = await this.blogService.blogUnrented(id, currentUser)
