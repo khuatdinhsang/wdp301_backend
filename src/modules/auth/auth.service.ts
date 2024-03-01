@@ -13,6 +13,7 @@ import { Blog } from '../blog/schemas/blog.schemas';
 import ResponseHelper from 'src/utils/respones.until';
 import { Subject } from 'src/enums/subject.enum';
 import { Content } from 'src/enums/content.enum';
+import { LIMIT_DOCUMENT } from 'src/contants';
 @Injectable({})
 export class AuthService {
     constructor(
@@ -210,7 +211,7 @@ export class AuthService {
     }
 
 
-    async getAllRenters(limit: number, page: number, search: string): Promise<any> {
+    async getAllRenters(limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
         const skipNumber = (page - 1) * limit;
         const conditions = {
             $or: [
@@ -256,36 +257,91 @@ export class AuthService {
             return { status: 500, message: "Internal server error" };
         }
     }
-    async getAllUsers(page: number): Promise<User[]> {
-        const pageSize = 10;
-        const skip = (page - 1) * pageSize;
-        return this.userModel.find({ role: { $in: [UserRole.RENTER, UserRole.LESSOR] } }).skip(skip).limit(pageSize).exec();
-
-    }
-    async getAllLessors(page: number): Promise<User[]> {
-        const pageSize = 10;
-        const skip = (page - 1) * pageSize;
-        return this.userModel.find({ role: UserRole.LESSOR }).skip(skip).limit(pageSize).exec();
-    }
-    async getAllBlogPostByUserId(userId: number, page: number): Promise<Blog[]> {
-        const pageSize = 10;
-        const skip = (page - 1) * pageSize;
-        const user = await this.userModel.findById(userId).populate('blogsPost');
-        if (!user) {
-            return [];
+    async getAllUsers(limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
+        const skipNumber = (page - 1) * limit;
+        const conditions = {
+            $or: [
+                { fullName: { $regex: search, $options: 'i' } },
+            ],
+            $and: [{ role: { $in: [UserRole.RENTER, UserRole.LESSOR] } }]
+        };
+        const searchQuery = search ? conditions : { role: { $in: [UserRole.RENTER, UserRole.LESSOR] } };
+        const totalUser = await this.userModel.countDocuments(searchQuery)
+        const allUser = await this.userModel
+            .find(searchQuery)
+            .skip(skipNumber)
+            .limit(limit)
+        const response = {
+            totalUser,
+            allUser,
+            currentPage: (page),
+            limit: (limit)
         }
-        const blogPosts = user.blogsPost.slice(skip, skip + pageSize);
-        return blogPosts;
+        return response
     }
-    async getAllFavouriteBlogsByUserId(userId: number, page: number): Promise<Blog[]> {
-        const pageSize = 10;
-        const skip = (page - 1) * pageSize;
-        const user = (await this.userModel.findById(userId)).populate('blogsFavorite');
-        if (!user) {
-            return [];
+    async getAllLessors(limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
+        const skipNumber = (page - 1) * limit;
+        const conditions = {
+            $or: [
+                { fullName: { $regex: search, $options: 'i' } },
+            ],
+            $and: [{ role: UserRole.LESSOR }]
+        };
+        const searchQuery = search ? conditions : { role: UserRole.LESSOR };
+        const totalLessor = await this.userModel.countDocuments(searchQuery)
+        const allLessor = await this.userModel
+            .find(searchQuery)
+            .skip(skipNumber)
+            .limit(limit)
+        const response = {
+            totalLessor,
+            allLessor,
+            currentPage: (page),
+            limit: (limit)
         }
-        const favoriteBlog = (await user).blogsFavorite.slice(skip, skip + pageSize);
-        return favoriteBlog;
+        return response
+    }
+    // tích hợp search ở
+    async getAllBlogPostByUserId(userId: number, limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
+        const skipNumber = (page - 1) * limit;
+        const conditions = {
+            $or: [
+                { title: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+            ],
+            $and: [
+                { userId }
+            ]
+        };
+        const searchQuery = search ? conditions : { userId };
+        const totalBlog = await this.blogModel.countDocuments(searchQuery)
+        const allBlog = await this.blogModel
+            .find(searchQuery)
+            .skip(skipNumber)
+            .limit(limit)
+        const response = {
+            totalBlog,
+            allBlog,
+            currentPage: (page),
+            limit: (limit)
+        }
+        return response
+    }
+    async getAllFavouriteBlogsByUserId(userId: number, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
+        const skipNumber = (page - 1) * limit;
+        const totalBlog = await this.userModel.countDocuments({ _id: userId }).populate('blogsFavorite')
+        const allBlog = await this.userModel
+            .find({ _id: userId })
+            .skip(skipNumber)
+            .limit(limit)
+            .populate('blogsFavorite');
+        const response = {
+            totalBlog,
+            allBlog,
+            currentPage: (page),
+            limit: (limit)
+        }
+        return response
     }
 
 }
