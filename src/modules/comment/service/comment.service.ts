@@ -9,8 +9,8 @@ import ResponseHelper from "src/utils/respones.until";
 import { CreateCommentDto, UpdateCommentDto } from "../dtos/comment.dto";
 import { Comments } from "../schemas/comment.schema";
 import { LIMIT_DOCUMENT } from "src/contants";
+import { JwtDecode } from "src/modules/auth/types";
 import { User } from "src/modules/auth/schemas/user.schemas";
-import { JwtDecode } from "src/modules/auth/types/jwt.type";
 
 @Injectable({})
 export class CommentService {
@@ -18,9 +18,9 @@ export class CommentService {
         @InjectModel(Comments.name) private commentModel: Model<Comments>,
         @InjectModel(User.name) private userModel: Model<User>,
     ) { }
-    async create( data: CreateCommentDto, currentUser: JwtDecode ): Promise<Comments> {
+    async create(data: CreateCommentDto, currentUser: JwtDecode): Promise<Comments> {
         const user = await this.userModel.findById(currentUser.id);
-        const createdComment = await this.commentModel.create({...data, userId: currentUser.id, fullname: currentUser.fullName, avt: user.avatar, time: new Date()})
+        const createdComment = await this.commentModel.create({ ...data, userId: currentUser.id, fullname: currentUser.fullName, avt: user.avatar, time: new Date() })
         return createdComment.toObject();
     }
     // async getAll(data: getAllCommentDTO): Promise<Comments[]> {
@@ -45,7 +45,7 @@ export class CommentService {
     }
     async update(id: string, data: UpdateCommentDto) {
         const comment = await this.commentModel.findById(id)
-        if(!comment){
+        if (!comment) {
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
                 Subject.COMMENT,
@@ -53,7 +53,7 @@ export class CommentService {
                 null,
             );
         }
-        else{
+        else {
             const commentModify = { ...comment.toObject(), ...data }
             const commentEdited = await this.commentModel.findByIdAndUpdate(id, commentModify, { new: true })
             return ResponseHelper.response(
@@ -64,9 +64,9 @@ export class CommentService {
             );
         }
     }
-    async delete(id: string){
+    async delete(id: string) {
         const comment = await this.commentModel.findByIdAndDelete(id)
-        if(!comment){
+        if (!comment) {
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
                 Subject.COMMENT,
@@ -74,7 +74,7 @@ export class CommentService {
                 null,
             );
         }
-        else{
+        else {
             return ResponseHelper.response(
                 HttpStatus.OK,
                 Subject.COMMENT,

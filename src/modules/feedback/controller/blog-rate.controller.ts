@@ -16,6 +16,8 @@ import { BlogRateService } from "../service/blog-rate.service";
 
 export class BlogRateController {
     constructor(private blogRateService: BlogRateService) { }
+
+    // tạo feedback
     @Post('create')
     @HttpCode(200)
     @UseGuards(AuthGuardUser)
@@ -46,33 +48,35 @@ export class BlogRateController {
             )
         }
     }
+    // tạm thời chưa dùng api này
+    // @Get('GetAll')
+    // @HttpCode(200)
+    // @ApiOkResponse({
+    //     type: () => ResponseHelper,
+    // })
+    // async getAll(): Promise<ResponseHelper> {
+    //     try {
+    //         const result = await this.blogRateService.getAll()
+    //         return ResponseHelper.response(
+    //             HttpStatus.OK,
+    //             Subject.FEEDBACK,
+    //             Content.SUCCESSFULLY,
+    //             result,
+    //             Field.READ
+    //         )
+    //     } catch (error) {
+    //         return ResponseHelper.response(
+    //             HttpStatus.INTERNAL_SERVER_ERROR,
+    //             Subject.FEEDBACK,
+    //             Content.FAILED,
+    //             error,
+    //             Field.READ
+    //         )
+    //     }
+    // }
 
-    @Get('GetAll')
-    @HttpCode(200)
-    @ApiOkResponse({
-        type: () => ResponseHelper,
-    })
-    async getAll(): Promise<ResponseHelper> {
-        try {
-            const result = await this.blogRateService.getAll()
-            return ResponseHelper.response(
-                HttpStatus.OK,
-                Subject.FEEDBACK,
-                Content.SUCCESSFULLY,
-                result,
-                Field.READ
-            )
-        } catch (error) {
-            return ResponseHelper.response(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                Subject.FEEDBACK,
-                Content.FAILED,
-                error,
-                Field.READ
-            )
-        }
-    }
 
+    // lấy tất cả các feedback của 1 blog
     @Get('GetAll/:blogId')
     @ApiQuery({ name: 'limit', required: false })
     @ApiQuery({ name: 'page', required: false })
@@ -104,7 +108,7 @@ export class BlogRateController {
             )
         }
     }
-
+    // check comment 1 lần --> sau thầy lại bảo comment nhiều lần 
     @Get('check/:blogId')
     @HttpCode(200)
     @UseGuards(AuthGuardUser)
@@ -133,7 +137,7 @@ export class BlogRateController {
         }
     }
 
-
+    // update feedback
     @Patch('update/:id')
     @HttpCode(200)
     @UseGuards(AuthGuardUser)
@@ -160,6 +164,7 @@ export class BlogRateController {
         }
     }
 
+    // xóa feedback
     @Delete('delete/:id')
     @HttpCode(200)
     @UseGuards(AuthGuardUser)

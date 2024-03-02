@@ -27,7 +27,7 @@ import {
   getAllDTO,
   searchBlogDTO,
 } from './dto';
-import { BlogMessage } from 'src/enums';
+import { BlogMessage, UserMessage } from 'src/enums';
 import { AuthGuardUser } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/decorator/user.decorator';
 import { JwtDecode } from '../auth/types';
@@ -35,6 +35,8 @@ import { JwtDecode } from '../auth/types';
 @Controller('blog')
 export class BlogController {
   constructor(private blogService: BlogService) { }
+
+  // tạo mới blog  -> làm lại
   @Post('create')
   @HttpCode(200)
   @UseGuards(AuthGuardUser)
@@ -59,6 +61,8 @@ export class BlogController {
       return response;
     }
   }
+
+  // lấy chi tiết 1 blog 
   @Get('detail/:id')
   @ApiParam({ name: 'id', description: 'ID of the blog', required: true })
   @HttpCode(200)
@@ -80,6 +84,8 @@ export class BlogController {
     }
   }
 
+
+  // lấy tất cả các blog bởi admin
   @Get('getAll/admin')
   @ApiBearerAuth('JWT-auth')
   @HttpCode(200)
@@ -110,6 +116,7 @@ export class BlogController {
     }
   }
 
+  // lấy theo category blog được accept -- > hiển thị trang home
   @Get('getAllAccepted/:category')
   @ApiParam({
     name: 'category',
@@ -142,21 +149,26 @@ export class BlogController {
       return response;
     }
   }
+
+  // api tự hết thời gian của bài blog  --> chưa xong
   @Put('hidden/:id')
-  @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
   @ApiParam({ name: 'id', description: 'ID of the blog' })
   @HttpCode(200)
   @ApiOkResponse({
     type: () => ResponseBlog,
   })
-  async isHideBlog(@Param() body: { id: string }): Promise<ResponseBlog> {
+  async isHideBlog(@CurrentUser() currentUser: JwtDecode, @Param() body: { id: string }, @Body() hiddenReason: string): Promise<ResponseBlog> {
     const response = new ResponseBlog();
     try {
+      const isAdmin = currentUser.role === 'admin';
+      if (!isAdmin) {
+        throw new Error(UserMessage.isNotAdmin);
+      }
       response.setSuccess(
         HttpStatus.OK,
         BlogMessage.hiddenBlogSuccess,
-        await this.blogService.hiddenBlog(body.id),
+        await this.blogService.hiddenBlog(body.id, hiddenReason),
       );
       return response;
     } catch (error) {
@@ -164,6 +176,8 @@ export class BlogController {
       return response;
     }
   }
+
+  // edit blog  -> làm lại
   @Put('edit/:id')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
@@ -190,6 +204,8 @@ export class BlogController {
     }
   }
 
+
+  // chấp nhận blog bởi admin
   @Put('BlogAccept/:id')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
@@ -213,7 +229,7 @@ export class BlogController {
     }
   }
 
-
+  // từ chối blog bởi admin
   @Put('BlogDecline/:id')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
@@ -236,6 +252,7 @@ export class BlogController {
     }
   }
 
+  // Phòng này đã được thuê  chỉ có chủ trọ mới thao tác được
   @Put('BlogRented/:id')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
@@ -258,6 +275,7 @@ export class BlogController {
     }
   }
 
+  // Bỏ phòng  đã được thuê  chỉ có chủ trọ mới thao tác được
 
   @Put('BlogUnrented/:id')
   @UseGuards(AuthGuardUser)
@@ -281,10 +299,13 @@ export class BlogController {
     }
   }
 
+
   @Put('RentedRoom/:id')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
   @ApiParam({ name: 'id', description: 'ID of the blog' })
+
+
   async UserRentRoom(
     @Param('id') id: string,
     @CurrentUser() currentUser: JwtDecode,
@@ -300,6 +321,7 @@ export class BlogController {
     }
   }
 
+  // api search blog by price, area
   @Post('searchBlog')
   @HttpCode(200)
   @ApiOkResponse({
