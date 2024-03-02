@@ -203,4 +203,36 @@ export class BlogService {
     });
     return blogEdited;
   }
+
+
+  async UserRentRoom(
+    id: string,
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id);
+    const blog = await this.blogModel.findById(id);
+    if (!AuthGuardUser.isRenter(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+
+    }
+    if (blog.isRented) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.RENTED,
+        null,
+      );
+    }
+    const blogRented = await this.blogModel.findByIdAndUpdate(id, { isRented: true, Renterid : currentUser.id }, {
+      new: true,
+    });
+    return blogRented;
+  }
+
 }
+

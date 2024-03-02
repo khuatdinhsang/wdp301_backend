@@ -2,6 +2,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose, { HydratedDocument } from "mongoose";
 import { CategoryRoom, HasTagRoom, RentalObject } from "src/enums";
+import { User } from "src/modules/auth/schemas/user.schemas";
 
 export type BlogDocument = HydratedDocument<Blog>;
 @Schema()
@@ -46,6 +47,8 @@ export class Blog {
     isHide: boolean
     @Prop()
     star: number
+    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
+    Renterid: string 
     @Prop({ default: false })
     isRented: boolean
     @Prop({ default: 0 })
