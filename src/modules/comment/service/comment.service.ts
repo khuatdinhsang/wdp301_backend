@@ -6,7 +6,7 @@ import { Content } from "src/enums/content.enum";
 import { Subject } from "src/enums/subject.enum";
 import { UploadService } from "src/modules/common/upload/upload.service";
 import ResponseHelper from "src/utils/respones.until";
-import { createCommentDto, detailCommentDTO, getAllCommentDTO, updateCommentDto } from "../dtos/comment.dto";
+import { CreateCommentDto, UpdateCommentDto } from "../dtos/comment.dto";
 import { Comments } from "../schemas/comment.schema";
 import { LIMIT_DOCUMENT } from "src/contants";
 
@@ -16,7 +16,7 @@ export class CommentService {
         @InjectModel(Comments.name) private CommentModel: Model<Comments>,
         private readonly uploadService: UploadService,
     ) { }
-    async create(data: createCommentDto): Promise<Comments> {
+    async create(data: CreateCommentDto): Promise<Comments> {
         const fileName = await this.uploadService.uploadOneObject(data.file);
         const createdBlogRate = await this.CommentModel.create({ ...data, file: fileName })
         return createdBlogRate.toObject();
@@ -41,7 +41,7 @@ export class CommentService {
         }
         return response
     }
-    async update(id: detailCommentDTO, data: updateCommentDto) {
+    async update(id: string, data: UpdateCommentDto) {
         const comment = await this.CommentModel.findById(id)
         if (!comment) {
             return ResponseHelper.response(
@@ -63,7 +63,7 @@ export class CommentService {
             );
         }
     }
-    async delete(id: detailCommentDTO) {
+    async delete(id: string) {
         const comment = await this.CommentModel.findByIdAndDelete(id)
         if (!comment) {
             return ResponseHelper.response(
@@ -83,3 +83,5 @@ export class CommentService {
         }
     }
 }
+
+

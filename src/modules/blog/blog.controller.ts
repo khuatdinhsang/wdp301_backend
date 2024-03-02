@@ -25,6 +25,7 @@ import {
   createBlogDTO,
   editBlogDTO,
   getAllDTO,
+  searchBlogDTO,
 } from './dto';
 import { BlogMessage } from 'src/enums';
 import { AuthGuardUser } from '../auth/auth.guard';
@@ -279,5 +280,33 @@ export class BlogController {
       return response;
     }
   }
+
+
+  @Post('searchBlog')
+  @HttpCode(200)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  async searchBlog(
+    @Body() body: searchBlogDTO,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page: number,
+  ): Promise<ResponseBlog> {
+    const response = new ResponseBlog();
+    try {
+      response.setSuccess(
+        HttpStatus.OK,
+        BlogMessage.allBlogSuccess,
+        await this.blogService.searchBlog(body, limit, page),
+      );
+      return response;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+
 
 }

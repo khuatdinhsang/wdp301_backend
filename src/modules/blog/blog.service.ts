@@ -10,6 +10,7 @@ import {
   createBlogDTO,
   editBlogDTO,
   getAllDTO,
+  searchBlogDTO,
 } from './dto';
 import { Blog } from './schemas/blog.schemas';
 import ResponseHelper from 'src/utils/respones.until';
@@ -202,5 +203,28 @@ export class BlogService {
       new: true,
     });
     return blogEdited;
+  }
+
+
+  async searchBlog(body: searchBlogDTO, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
+    const skipNumber = (page - 1) * limit;
+    const totalBlog = await this.blogModel.countDocuments({
+      money: { $gte: body.minPrice, $lte: body.maxPrice },
+      area: { $gte: body.minArea, $lte: body.maxArea },
+    })
+    const allBlog = await this.blogModel
+      .find({
+        money: { $gte: body.minPrice, $lte: body.maxPrice },
+        area: { $gte: body.minArea, $lte: body.maxArea },
+      })
+      .skip(skipNumber)
+      .limit(limit)
+    const response = {
+      totalBlog: totalBlog,
+      allBlog: allBlog,
+      currentPage: (page),
+      limit: (limit)
+    }
+    return response
   }
 }
