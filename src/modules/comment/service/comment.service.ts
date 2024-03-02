@@ -9,17 +9,19 @@ import ResponseHelper from "src/utils/respones.until";
 import { CreateCommentDto, UpdateCommentDto } from "../dtos/comment.dto";
 import { Comments } from "../schemas/comment.schema";
 import { LIMIT_DOCUMENT } from "src/contants";
+import { User } from "src/modules/auth/schemas/user.schemas";
+import { JwtDecode } from "src/modules/auth/types/jwt.type";
 
 @Injectable({})
 export class CommentService {
     constructor(
-        @InjectModel(Comments.name) private CommentModel: Model<Comments>,
-        private readonly uploadService: UploadService,
+        @InjectModel(Comments.name) private commentModel: Model<Comments>,
+        @InjectModel(User.name) private userModel: Model<User>,
     ) { }
-    async create(data: CreateCommentDto): Promise<Comments> {
-        const fileName = await this.uploadService.uploadOneObject(data.file);
-        const createdBlogRate = await this.CommentModel.create({ ...data, file: fileName })
-        return createdBlogRate.toObject();
+    async create( data: CreateCommentDto, currentUser: JwtDecode ): Promise<Comments> {
+        const user = await this.userModel.findById(currentUser.id);
+        const createdComment = await this.commentModel.create({...data, userId: currentUser.id, fullname: currentUser.fullName, avt: user.avatar, time: new Date()})
+        return createdComment.toObject();
     }
     // async getAll(data: getAllCommentDTO): Promise<Comments[]> {
     //     const allBlogRate = await this.CommentModel.find({ data }).lean().exec()
@@ -28,8 +30,8 @@ export class CommentService {
 
     async getAllByFeedbackId(feedbackId: string, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
         const skipNumber = (page - 1) * limit;
-        const totalComment = await this.CommentModel.countDocuments({ feedbackId })
-        const allComment = await this.CommentModel
+        const totalComment = await this.commentModel.countDocuments({ feedbackId })
+        const allComment = await this.commentModel
             .find({ feedbackId })
             .skip(skipNumber)
             .limit(limit)
@@ -42,41 +44,40 @@ export class CommentService {
         return response
     }
     async update(id: string, data: UpdateCommentDto) {
-        const comment = await this.CommentModel.findById(id)
-        if (!comment) {
+        const comment = await this.commentModel.findById(id)
+        if(!comment){
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.NOT_FOUND,
                 null,
             );
         }
-        else {
-            const fileName = await this.uploadService.uploadOneObject(data.file);
-            const commentModify = { ...comment.toObject(), ...data, file: fileName }
-            const commentEdited = await this.CommentModel.findByIdAndUpdate(id, commentModify, { new: true })
+        else{
+            const commentModify = { ...comment.toObject(), ...data }
+            const commentEdited = await this.commentModel.findByIdAndUpdate(id, commentModify, { new: true })
             return ResponseHelper.response(
                 HttpStatus.OK,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.SUCCESSFULLY,
                 commentEdited,
             );
         }
     }
-    async delete(id: string) {
-        const comment = await this.CommentModel.findByIdAndDelete(id)
-        if (!comment) {
+    async delete(id: string){
+        const comment = await this.commentModel.findByIdAndDelete(id)
+        if(!comment){
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.NOT_FOUND,
                 null,
             );
         }
-        else {
+        else{
             return ResponseHelper.response(
                 HttpStatus.OK,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.SUCCESSFULLY,
                 comment,
             )
