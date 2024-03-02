@@ -8,11 +8,15 @@ import { AuthGuardUser } from "src/modules/auth/auth.guard";
 import ResponseHelper from "src/utils/respones.until";
 import { CreateCommentDto, UpdateCommentDto } from "../dtos/comment.dto";
 import { CommentService } from "../service/comment.service";
+import { CurrentUser } from "src/modules/auth/decorator/user.decorator";
+import { JwtDecode } from "src/modules/auth/types/jwt.type";
 @ApiTags('Comment')
 @Controller("comment")
 
 export class CommentController {
     constructor(private commentService: CommentService) { }
+
+    // tạo comment
     @Post('create')
     @HttpCode(200)
     @UseGuards(AuthGuardUser)
@@ -22,9 +26,10 @@ export class CommentController {
     })
     async create(
         @Body() payload: CreateCommentDto,
+        @CurrentUser() currentUser: JwtDecode,
     ): Promise<ResponseHelper> {
         try {
-            const result = await this.commentService.create(payload)
+            const result = await this.commentService.create(payload, currentUser)
             return ResponseHelper.response(
                 HttpStatus.OK,
                 Subject.COMMENT,
@@ -43,11 +48,12 @@ export class CommentController {
         }
     }
 
-    @Get('GetAll')
-    @HttpCode(200)
-    @ApiOkResponse({
-        type: () => ResponseHelper,
-    })
+    // tạm thời chưa dùng đến
+    // @Get('GetAll')
+    // @HttpCode(200)
+    // @ApiOkResponse({
+    //     type: () => ResponseHelper,
+    // })
     // async getAll(): Promise<ResponseHelper> {
     //     try {
     //         const result = await this.commentService.getAll()
@@ -69,6 +75,8 @@ export class CommentController {
     //     }
     // }
 
+
+    // lấy tất cả các comment của 1 feedbackid
     @Get('GetAll/:feedbackId')
     @HttpCode(200)
     @ApiQuery({ name: 'limit', required: false })
@@ -101,7 +109,7 @@ export class CommentController {
         }
     }
 
-
+    // update comment
     @Patch('update/:id')
     @HttpCode(200)
     @UseGuards(AuthGuardUser)
@@ -128,6 +136,7 @@ export class CommentController {
         }
     }
 
+    // delete comment
     @Delete('delete/:id')
     @HttpCode(200)
     @UseGuards(AuthGuardUser)

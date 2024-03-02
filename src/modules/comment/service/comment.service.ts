@@ -48,18 +48,17 @@ export class CommentService {
         if (!comment) {
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.NOT_FOUND,
                 null,
             );
         }
         else {
-            const fileName = await this.uploadService.uploadOneObject(data.file);
-            const commentModify = { ...comment.toObject(), ...data, file: fileName }
+            const commentModify = { ...comment.toObject(), ...data }
             const commentEdited = await this.commentModel.findByIdAndUpdate(id, commentModify, { new: true })
             return ResponseHelper.response(
                 HttpStatus.OK,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.SUCCESSFULLY,
                 commentEdited,
             );
@@ -70,7 +69,7 @@ export class CommentService {
         if (!comment) {
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.NOT_FOUND,
                 null,
             );
@@ -78,7 +77,7 @@ export class CommentService {
         else {
             return ResponseHelper.response(
                 HttpStatus.OK,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.SUCCESSFULLY,
                 comment,
             )

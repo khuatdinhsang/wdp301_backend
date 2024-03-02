@@ -1,7 +1,8 @@
 /* eslint-disable prettier/prettier */
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Prop, Schema, SchemaFactory, raw } from "@nestjs/mongoose";
 import mongoose, { HydratedDocument } from "mongoose";
 import { CategoryRoom, HasTagRoom, RentalObject } from "src/enums";
+import { User } from "src/modules/auth/schemas/user.schemas";
 
 export type BlogDocument = HydratedDocument<Blog>;
 @Schema()
@@ -32,8 +33,6 @@ export class Blog {
     ward: string
     @Prop()
     addressDetail: string
-    @Prop({ default: 1 })
-    totalRoom: number
     @Prop({ default: 0 })
     totalFavorite: number
     @Prop({ type: String, required: true, default: RentalObject.BOTH })
@@ -42,10 +41,16 @@ export class Blog {
     isAccepted: boolean
     @Prop({ type: Date, required: true })
     expiredTime: Date
-    @Prop({ default: false })
-    isHide: boolean
+    @Prop(raw({
+        hidden: { type: Boolean, default: false },
+        content: String,
+        day: Date
+    }))
+    isHide: Record<string, any>;
     @Prop()
     star: number
+    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
+    Renterid: string
     @Prop({ default: false })
     isRented: boolean
     @Prop({ default: 0 })

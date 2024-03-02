@@ -77,14 +77,25 @@ export class BlogService {
     }
     return response
   }
-  async hiddenBlog(id: string): Promise<Blog> {
-    const blog = await this.blogModel.findById(id);
-    const blogHidden = await this.blogModel.findByIdAndUpdate(
-      id,
-      { $set: { isHide: blog.isHide ? false : true } },
-      { new: true },
-    );
-    return blogHidden as Blog;
+  async hiddenBlog(id: string, hiddenReason: string): Promise<any> {
+    try {
+      const blog = await this.blogModel.findById(id);
+      blog.isHide = {
+        isBlock: !blog.isHide?.hidden || false,
+        content: hiddenReason,
+        day: new Date(),
+      };
+      await blog.save()
+      if (blog.isHide?.hidden) {
+        return { status: 200, message: 'Hidden blog successfully' };
+      } else {
+        return { status: 200, message: 'Active blog successfully' };
+      }
+    } catch (error) {
+      return { status: 500, message: "Internal server error" };
+    }
+
+
   }
   async editBlog(id: string, data: editBlogDTO): Promise<Blog> {
     const blog = await this.blogModel.findById(id);
@@ -169,7 +180,7 @@ export class BlogService {
   ) {
     const user = await this.userModel.findById(currentUser.id);
 
-    if (!AuthGuardUser.isLessor(user) && !AuthGuardUser.isAdmin(user)) {
+    if (!AuthGuardUser.isLessor(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,
@@ -203,6 +214,34 @@ export class BlogService {
       new: true,
     });
     return blogEdited;
+  }
+  async UserRentRoom(
+    id: string,
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id);
+    const blog = await this.blogModel.findById(id);
+    if (!AuthGuardUser.isLessor(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+
+    }
+    if (blog.isRented) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.RENTED,
+        null,
+      );
+    }
+    const blogRented = await this.blogModel.findByIdAndUpdate(id, { isRented: true, Renterid: currentUser.id }, {
+      new: true,
+    });
+    return blogRented;
   }
 
 

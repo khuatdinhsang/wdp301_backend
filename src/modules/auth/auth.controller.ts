@@ -17,6 +17,7 @@ import { ToggleBlockUserDTO } from "./dto/toggleBlockUser.dto";
 @Controller("auth")
 export class AuthController {
     constructor(private authService: AuthService) { }
+    // đăng kí bằng số điện thoại
     @Post('register')
     @HttpCode(200)
     @ApiOkResponse({
@@ -32,6 +33,8 @@ export class AuthController {
             return response
         }
     }
+
+    // login bằng sdt và mk
     @Post('login')
     @HttpCode(200)
     @ApiOkResponse({
@@ -47,6 +50,7 @@ export class AuthController {
             return response
         }
     }
+    // refreshtoken bên front-end
     @Post('refreshToken')
     @HttpCode(200)
     @ApiOkResponse({
@@ -62,6 +66,8 @@ export class AuthController {
             return response
         }
     }
+
+    // cho user yêu thích các blog
     @Post('blog/favorite')
     @HttpCode(200)
     @UseGuards(AuthGuardUser)
@@ -80,6 +86,8 @@ export class AuthController {
         }
 
     }
+
+    // cho user chỉnh sửa thông tin cá nhân
     @Post('editProfile')
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
@@ -103,7 +111,7 @@ export class AuthController {
             return response;
         }
     }
-
+    // login GG
     @Get('google/login')
     @UseGuards(GoogleAuthGuard)
     async googleAuth(@Req() req) {
@@ -121,7 +129,7 @@ export class AuthController {
         }
         return response
     }
-
+    // login Facebook
     @Get('facebook/login')
     @UseGuards(FacebookAuthGuard)
     async facebookAuth() { }
@@ -137,7 +145,8 @@ export class AuthController {
         }
         return response
     }
-    // @UseGuards(AuthGuardUser)
+
+    // view profile, người khác cũng có thể xem được trang cá nhân của mình
     @ApiBearerAuth('JWT-auth')
     @Get('profile')
     async profileDetail(@CurrentUser() currentUser: JwtDecode): Promise<ResponseProfileDetail> {
@@ -152,7 +161,7 @@ export class AuthController {
 
         return response;
     }
-
+    // user thay đổi mật khẩu
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Post('changePassword')
@@ -180,6 +189,7 @@ export class AuthController {
     }
 
 
+    // get All role rented bởi admin
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Get('/getAllRenter')
@@ -203,6 +213,8 @@ export class AuthController {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // get tất cả người dùng (renter, lessor) bởi admin
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiQuery({ name: 'limit', required: false })
@@ -226,12 +238,12 @@ export class AuthController {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    // block user by admin ---> chưa xong 
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Post(':userId/toggleBlock')
     async toggleBlockUser(@Param('userId') userId: string, @Body() dto: ToggleBlockUserDTO): Promise<ResponseToggleBlockUser> {
         const response = new ResponseToggleBlockUser();
-
         try {
             const { blockReason } = dto;
             const result = await this.authService.toggleBlockUser(userId, blockReason);
@@ -250,7 +262,7 @@ export class AuthController {
         return response;
     }
 
-
+    // get all Lessor by admin 
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Get('/getAllLessors')
@@ -274,6 +286,8 @@ export class AuthController {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // lấy tất cả các bài đăng của user 
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiQuery({ name: 'limit', required: false })
@@ -293,6 +307,8 @@ export class AuthController {
         }
     }
 
+
+    // lấy tất cả các bài viết yêu thích của user
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiQuery({ name: 'limit', required: false })
