@@ -281,12 +281,31 @@ export class BlogController {
     }
   }
 
+  @Put('RentedRoom/:id')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({ name: 'id', description: 'ID of the blog' })
+  async UserRentRoom(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: JwtDecode,
+  ) {
+    const response = new ResponseBlog();
+    try {
+      const result = await this.blogService.UserRentRoom(id, currentUser)
+      return result;
+    }
+    catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
 
   @Post('searchBlog')
   @HttpCode(200)
   @ApiOkResponse({
     type: () => ResponseBlog,
   })
+
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'page', required: false })
   async searchBlog(

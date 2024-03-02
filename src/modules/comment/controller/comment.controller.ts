@@ -8,6 +8,8 @@ import { AuthGuardUser } from "src/modules/auth/auth.guard";
 import ResponseHelper from "src/utils/respones.until";
 import { CreateCommentDto, UpdateCommentDto } from "../dtos/comment.dto";
 import { CommentService } from "../service/comment.service";
+import { CurrentUser } from "src/modules/auth/decorator/user.decorator";
+import { JwtDecode } from "src/modules/auth/types/jwt.type";
 @ApiTags('Comment')
 @Controller("comment")
 
@@ -22,9 +24,10 @@ export class CommentController {
     })
     async create(
         @Body() payload: CreateCommentDto,
+        @CurrentUser() currentUser: JwtDecode,
     ): Promise<ResponseHelper> {
         try {
-            const result = await this.commentService.create(payload)
+            const result = await this.commentService.create(payload, currentUser)
             return ResponseHelper.response(
                 HttpStatus.OK,
                 Subject.COMMENT,
