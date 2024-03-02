@@ -31,13 +31,7 @@ export class BlogRateController {
     ): Promise<ResponseHelper> {
         try {
             const result = await this.blogRateService.create(payload, currentUser)
-            return ResponseHelper.response(
-                HttpStatus.OK,
-                Subject.FEEDBACK,
-                Content.SUCCESSFULLY,
-                result,
-                Field.CREATE
-            )
+            return result
         } catch (error) {
             return ResponseHelper.response(
                 HttpStatus.INTERNAL_SERVER_ERROR,

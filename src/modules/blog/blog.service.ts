@@ -17,6 +17,7 @@ import ResponseHelper from 'src/utils/respones.until';
 import { Content } from 'src/enums/content.enum';
 import { Subject } from 'src/enums/subject.enum';
 import { LIMIT_DOCUMENT } from '../../contants'
+import { Field } from 'src/enums/field.enum';
 @Injectable({})
 export class BlogService {
   constructor(
@@ -215,6 +216,38 @@ export class BlogService {
     });
     return blogEdited;
   }
+
+  // người cho thuê xác nhận cho thuê
+  async ConfirmUserRentRoom(
+    id: string,
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id);
+    const blog = await this.blogModel.findById(id);
+    if (!AuthGuardUser.isLessor(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+
+    }
+    if (blog.isRented) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.RENTED,
+        null,
+      );
+    }
+    const blogRented = await this.blogModel.findByIdAndUpdate(id, { Renterid : currentUser.id }, {
+      new: true,
+    });
+    return blogRented;
+  }
+
+ //  người thuê nhấn thuê 
   async UserRentRoom(
     id: string,
     currentUser: JwtDecode,
@@ -238,7 +271,7 @@ export class BlogService {
         null,
       );
     }
-    const blogRented = await this.blogModel.findByIdAndUpdate(id, { isRented: true, Renterid: currentUser.id }, {
+    const blogRented = await this.blogModel.findByIdAndUpdate(id, { Renterconfirm : currentUser.id }, {
       new: true,
     });
     return blogRented;
@@ -265,5 +298,52 @@ export class BlogService {
       limit: (limit)
     }
     return response
+  }
+
+// lấy ra phòng người dùng thuê
+  async GetRoonRentedByUser(
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id);
+    if (!AuthGuardUser.isRenter(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+    }
+    const blogRented = await this.blogModel.find( { Renterid : currentUser.id } );
+    return ResponseHelper.response(
+      HttpStatus.OK,
+      Subject.BLOG,
+      Content.SUCCESSFULLY,
+      blogRented,
+      Field.READ
+    )
+  }
+
+  // lấy ra phòng người cho thuê đăng 
+  async GetRoomLessorRentOut(
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id)      
+    .populate('blogsPost')
+    .exec();;
+    if (!AuthGuardUser.isLessor(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+    }
+    return ResponseHelper.response(
+      HttpStatus.OK,
+      Subject.BLOG,
+      Content.SUCCESSFULLY,
+      user.blogsPost,
+      Field.READ
+  ) 
   }
 }

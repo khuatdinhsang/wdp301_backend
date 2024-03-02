@@ -12,6 +12,7 @@ import { createBlogRateDto, updateBlogRateDto } from "../dtos/blog-rate.dto";
 import { Blog_Rate } from "../schema/blog-rate.schemas";
 import { User } from "src/modules/auth/schemas/user.schemas";
 import { LIMIT_DOCUMENT } from "src/contants";
+import { Field } from "src/enums/field.enum";
 
 @Injectable({})
 export class BlogRateService {
@@ -21,15 +22,34 @@ export class BlogRateService {
         @InjectModel(User.name) private userModel: Model<User>,
         private readonly uploadService: UploadService,
     ) { }
-    async create(data: createBlogRateDto, currentUser: JwtDecode): Promise<Blog_Rate> {
+    async create(data: createBlogRateDto, currentUser: JwtDecode) {
         const blogId = data.blogId;
         const user = await this.userModel.findById(currentUser.id);
+        const userFeedback = await this.blogModel.findOne({ 
+            $and: [
+            { _id: blogId },
+            { Renterid: currentUser.id }
+          ] })
+        if(!userFeedback){
+            return ResponseHelper.response(
+                HttpStatus.ACCEPTED,
+                Subject.FEEDBACK,
+                Content.FAILED,
+                null,
+            );
+        }
         const createdBlogRate = await this.blogRateModel.create({ ...data, userId: currentUser.id, fullname: currentUser.fullName, avt: user.avatar, time: new Date() })
         const allBlogRate = await this.blogRateModel.find({ blogId }).lean().exec()
         const totalStars = allBlogRate.reduce((total, rate) => total + rate.star, 0);
         const avgBlogRate = totalStars / allBlogRate.length;
         await this.blogModel.findByIdAndUpdate(blogId, { avgBlogRate: avgBlogRate }).exec();
-        return createdBlogRate.toObject();
+        return ResponseHelper.response(
+            HttpStatus.OK,
+            Subject.FEEDBACK,
+            Content.SUCCESSFULLY,
+            createdBlogRate.toObject(),
+            Field.CREATE
+        )
     }
     async getAll(): Promise<Blog_Rate[]> {
         const allBlogRate = await this.blogRateModel.find().lean().exec()
@@ -37,8 +57,8 @@ export class BlogRateService {
     }
     async getAllByBlogId(blogId: string, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
         const skipNumber = (page - 1) * limit;
-        const totalFeedback = await this.blogModel.countDocuments({ blogId })
-        const allFeedback = await this.blogModel
+        const totalFeedback = await this.blogRateModel.countDocuments({ blogId })
+        const allFeedback = await this.blogRateModel
             .find({ blogId })
             .skip(skipNumber)
             .limit(limit)
@@ -50,8 +70,6 @@ export class BlogRateService {
         }
         return response
 
-        const allBlogRate = await this.blogRateModel.find({ blogId }).lean().exec()
-        return allBlogRate as Blog_Rate[]
     }
     async CheckExistedBlog(blogId: string, currentUser: JwtDecode) {
         const userId = currentUser.id;
