@@ -147,11 +147,13 @@ export class AuthController {
     }
 
     // view profile, người khác cũng có thể xem được trang cá nhân của mình
+
     @ApiBearerAuth('JWT-auth')
+    @UseGuards(AuthGuardUser)
     @Get('profile')
     async profileDetail(@CurrentUser() currentUser: JwtDecode): Promise<ResponseProfileDetail> {
         const response = new ResponseProfileDetail();
-
+        console.log("aa")
         try {
             const userProfile = await this.authService.profileDetail(currentUser.id);
             response.setSuccess(HttpStatus.OK, UserMessage.profileDetailSuccess, userProfile);
