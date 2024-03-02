@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
-import { FilesInterceptor } from "@nestjs/platform-express/multer";
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from "@nestjs/swagger";
+/* eslint-disable prettier/prettier */
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiOkResponse, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { Content } from "src/enums/content.enum";
 import { Field } from "src/enums/field.enum";
 import { Subject } from "src/enums/subject.enum";
@@ -14,7 +14,7 @@ import { BlogRateService } from "../service/blog-rate.service";
 @ApiTags('Blog_Rate')
 @Controller("blog_rate")
 
-export class BlogRateController{
+export class BlogRateController {
     constructor(private blogRateService: BlogRateService) { }
     @Post('create')
     @HttpCode(200)
@@ -24,9 +24,9 @@ export class BlogRateController{
         type: () => ResponseHelper,
     })
     async create(
-         @Body() payload: createBlogRateDto,
-         @CurrentUser() currentUser: JwtDecode,
-        ): Promise<ResponseHelper> {
+        @Body() payload: createBlogRateDto,
+        @CurrentUser() currentUser: JwtDecode,
+    ): Promise<ResponseHelper> {
         try {
             const result = await this.blogRateService.create(payload, currentUser)
             return ResponseHelper.response(
@@ -74,13 +74,19 @@ export class BlogRateController{
     }
 
     @Get('GetAll/:blogId')
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
     @HttpCode(200)
     @ApiOkResponse({
         type: () => ResponseHelper,
     })
-    async getAllByBlogId(@Param('blogId') blogid: string): Promise<ResponseHelper> {
+    async getAllByBlogId(
+        @Param('blogId') blogid: string,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+        @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    ): Promise<ResponseHelper> {
         try {
-            const result = await this.blogRateService.getAllByBlogId(blogid)
+            const result = await this.blogRateService.getAllByBlogId(blogid, limit, page)
             return ResponseHelper.response(
                 HttpStatus.OK,
                 Subject.FEEDBACK,
@@ -137,9 +143,9 @@ export class BlogRateController{
         description: 'Cập nhật thành công',
     })
     async update(
-        @Param('id') id:string,
+        @Param('id') id: string,
         @Body() payload: updateBlogRateDto,
-        ) {
+    ) {
         try {
             const result = await this.blogRateService.update(id, payload)
             return result
@@ -161,7 +167,7 @@ export class BlogRateController{
     @ApiOkResponse({
         type: () => ResponseHelper,
     })
-    async delete(@Param('id') id:string): Promise<ResponseHelper> {
+    async delete(@Param('id') id: string): Promise<ResponseHelper> {
         try {
             const result = await this.blogRateService.delete(id)
             return result

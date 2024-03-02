@@ -7,6 +7,7 @@ import { CommentController } from './controller/comment.controller';
 import { Comments, CommentsSchema } from './schemas/comment.schema';
 import { CommentService } from './service/comment.service';
 import { User, UserSchema } from '../auth/schemas/user.schemas';
+import { UploadModule } from '../common/upload/upload.modules';
 
 @Module({
     imports: [
@@ -14,6 +15,8 @@ import { User, UserSchema } from '../auth/schemas/user.schemas';
         JwtModule.register({
             global: true,
         }),
+        UploadModule,
+
     ],
     controllers: [
         CommentController
