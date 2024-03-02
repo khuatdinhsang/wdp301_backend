@@ -153,7 +153,7 @@ export class AuthController {
     @Get('profile')
     async profileDetail(@CurrentUser() currentUser: JwtDecode): Promise<ResponseProfileDetail> {
         const response = new ResponseProfileDetail();
-
+        console.log("aa")
         try {
             const userProfile = await this.authService.profileDetail(currentUser.id);
             response.setSuccess(HttpStatus.OK, UserMessage.profileDetailSuccess, userProfile);
