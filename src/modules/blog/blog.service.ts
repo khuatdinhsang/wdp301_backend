@@ -134,6 +134,87 @@ export class BlogService {
     return response
   }
 
+  async getAllAcceptBlogAdmin(currentUser: JwtDecode, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
+    const user = await this.userModel.findById(currentUser.id);
+    if (!AuthGuardUser.isAdmin(user)) {
+      return null;
+    }
+    const skipNumber = (page - 1) * limit;
+    const allBlog = await this.blogModel
+      .find({isAccepted: true})
+      .skip(skipNumber)
+      .limit(limit)
+    const totalBlog = await this.blogModel.countDocuments({isAccepted: true})
+    const response = {
+      totalBlog: totalBlog,
+      allBlog: allBlog,
+      currentPage: (page),
+      limit: (limit)
+    }
+    return response
+  }
+
+  async getAllUnacceptBlogAdmin(currentUser: JwtDecode, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
+    const user = await this.userModel.findById(currentUser.id);
+    if (!AuthGuardUser.isAdmin(user)) {
+      return null;
+    }
+    const skipNumber = (page - 1) * limit;
+    const totalBlog = await this.blogModel.countDocuments({isAccepted: false})
+    const allBlog = await this.blogModel
+      .find({isAccepted: false})
+      .skip(skipNumber)
+      .limit(limit)
+    const response = {
+      totalBlog: totalBlog,
+      allBlog: allBlog,
+      currentPage: (page),
+      limit: (limit)
+    }
+    return response
+  }
+
+  async getAllRentedBlogAdmin(currentUser: JwtDecode, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
+    const user = await this.userModel.findById(currentUser.id);
+    if (!AuthGuardUser.isAdmin(user)) {
+      return null;
+    }
+    const skipNumber = (page - 1) * limit;
+    const totalBlog = await this.blogModel.countDocuments({isRented: true})
+    const allBlog = await this.blogModel
+      .find({isRented: true})
+      .skip(skipNumber)
+      .limit(limit)
+    const response = {
+      totalBlog: totalBlog,
+      allBlog: allBlog,
+      currentPage: (page),
+      limit: (limit)
+    }
+    return response
+  }
+
+  async getAllUnRentedBlogAdmin(currentUser: JwtDecode, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
+    const user = await this.userModel.findById(currentUser.id);
+    if (!AuthGuardUser.isAdmin(user)) {
+      return null;
+    }
+    const skipNumber = (page - 1) * limit;
+    const totalBlog = await this.blogModel.countDocuments({isRented: false})
+    const allBlog = await this.blogModel
+      .find({isRented: false})
+      .skip(skipNumber)
+      .limit(limit)
+    const response = {
+      totalBlog: totalBlog,
+      allBlog: allBlog,
+      currentPage: (page),
+      limit: (limit)
+    }
+    return response
+  }
+
+
   async acceptBlog(
     id: string,
     currentUser: JwtDecode,
@@ -219,11 +300,12 @@ export class BlogService {
 
   // người cho thuê xác nhận cho thuê
   async ConfirmUserRentRoom(
-    id: string,
+    blogId: string,
+    renterId: string,
     currentUser: JwtDecode,
   ) {
     const user = await this.userModel.findById(currentUser.id);
-    const blog = await this.blogModel.findById(id);
+    const blog = await this.blogModel.findById(blogId);
     if (!AuthGuardUser.isLessor(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
@@ -241,9 +323,12 @@ export class BlogService {
         null,
       );
     }
-    const blogRented = await this.blogModel.findByIdAndUpdate(id, { Renterid : currentUser.id }, {
-      new: true,
-    });
+    const blogRented = await this.blogModel.findByIdAndUpdate(blogId,
+      { 
+       $addToSet: { Renterid: renterId }, 
+       $pull: { Renterconfirm: renterId },
+      },
+      { new: true });
     return blogRented;
   }
 
@@ -254,7 +339,7 @@ export class BlogService {
   ) {
     const user = await this.userModel.findById(currentUser.id);
     const blog = await this.blogModel.findById(id);
-    if (!AuthGuardUser.isLessor(user)) {
+    if (!AuthGuardUser.isRenter(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,
@@ -271,7 +356,9 @@ export class BlogService {
         null,
       );
     }
-    const blogRented = await this.blogModel.findByIdAndUpdate(id, { Renterconfirm : currentUser.id }, {
+    const blogRented = await this.blogModel.findByIdAndUpdate(id,{ 
+      $addToSet: { Renterid: currentUser.id }, 
+     }, {
       new: true,
     });
     return blogRented;
@@ -346,4 +433,75 @@ export class BlogService {
       Field.READ
   ) 
   }
+
+  async GetRentedRoomLessorRentOut(
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id)      
+    .populate({
+      path: 'blogsPost',
+      match: { isRented: true },
+    })
+    .exec();;
+    if (!AuthGuardUser.isLessor(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+    }
+    return ResponseHelper.response(
+      HttpStatus.OK,
+      Subject.BLOG,
+      Content.SUCCESSFULLY,
+      user.blogsPost,
+      Field.READ
+  ) 
+  }
+
+  async GetUnrentedRoomLessorRentOut(
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id)      
+    .populate({
+      path: 'blogsPost',
+      match: { isRented: false },
+    })
+    .exec();;
+    if (!AuthGuardUser.isLessor(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+    }
+    return ResponseHelper.response(
+      HttpStatus.OK,
+      Subject.BLOG,
+      Content.SUCCESSFULLY,
+      user.blogsPost,
+      Field.READ
+  ) 
+  }
+
+  async getRoomate(
+    currentUser: JwtDecode,
+  ) {
+    const roomrented = await this.blogModel.find({Renterid: currentUser.id})
+    const roomateId = roomrented
+    .filter((blog) => !blog.Renterid.includes(currentUser.id.toString()))
+    .map((blog) => blog.Renterid);
+
+    const roomate = await this.userModel.find({ _id: { $in: roomateId } });
+    return ResponseHelper.response(
+      HttpStatus.OK,
+      Subject.BLOG,
+      Content.SUCCESSFULLY,
+      roomate,
+      Field.READ
+  ) 
+  }
+
 }
