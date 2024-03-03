@@ -116,6 +116,123 @@ export class BlogController {
     }
   }
 
+    // lấy tất cả các blog đã accept
+    @Get('getAllAccepted/admin')
+    @ApiBearerAuth('JWT-auth')
+    @HttpCode(200)
+    @UseGuards(AuthGuardUser)
+    @ApiOkResponse({
+      type: () => ResponseBlog,
+    })
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
+    async getAllAcceptBlogAdmin(
+      @CurrentUser() currentUser: JwtDecode,
+      @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+      @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    ): Promise<ResponseBlog> {
+      const response = new ResponseBlog();
+      try {
+        response.setSuccess(
+          HttpStatus.OK,
+          BlogMessage.allBlogSuccess,
+          await this.blogService.getAllAcceptBlogAdmin(currentUser, limit, page),
+        );
+        return response;
+      } catch (error) {
+        response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+        return response;
+      }
+    }
+
+    // lấy tất cả các blog chưa accept
+    @Get('getAllUnaccepted/admin')
+    @ApiBearerAuth('JWT-auth')
+    @HttpCode(200)
+    @UseGuards(AuthGuardUser)
+    @ApiOkResponse({
+      type: () => ResponseBlog,
+    })
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
+    async getAllUnacceptBlogAdmin(
+      @CurrentUser() currentUser: JwtDecode,
+      @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+      @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    ): Promise<ResponseBlog> {
+      const response = new ResponseBlog();
+      try {
+        response.setSuccess(
+          HttpStatus.OK,
+          BlogMessage.allBlogSuccess,
+          await this.blogService.getAllUnacceptBlogAdmin(currentUser, limit, page),
+        );
+        return response;
+      } catch (error) {
+        response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+        return response;
+      }
+    }
+
+  // lấy tất cả các blog đã thuê
+  @Get('getAllRented/admin')
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(200)
+  @UseGuards(AuthGuardUser)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  async getAllRentedBlogAdmin(
+    @CurrentUser() currentUser: JwtDecode,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page: number,
+  ): Promise<ResponseBlog> {
+    const response = new ResponseBlog();
+    try {
+      response.setSuccess(
+        HttpStatus.OK,
+        BlogMessage.allBlogSuccess,
+        await this.blogService.getAllRentedBlogAdmin(currentUser, limit, page),
+      );
+      return response;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+
+  // lấy tất cả các blog chưa thuê
+  @Get('getAllUnented/admin')
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(200)
+  @UseGuards(AuthGuardUser)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  async getAllUnRentedBlogAdmin(
+    @CurrentUser() currentUser: JwtDecode,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page: number,
+  ): Promise<ResponseBlog> {
+    const response = new ResponseBlog();
+    try {
+      response.setSuccess(
+        HttpStatus.OK,
+        BlogMessage.allBlogSuccess,
+        await this.blogService.getAllUnRentedBlogAdmin(currentUser, limit, page),
+      );
+      return response;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+        
+
   // lấy theo category blog được accept -- > hiển thị trang home
   @Get('getAllAccepted/:category')
   @ApiParam({
@@ -299,17 +416,19 @@ export class BlogController {
     }
   }
 
-  @Put('RentedRoomConfirm/:id')
+  @Put('RentedRoomConfirm/:blogid/:renterid')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
-  @ApiParam({ name: 'id', description: 'ID of the blog' })
+  @ApiParam({ name: 'blogid', description: 'ID of the blog' })
+  @ApiParam({ name: 'renterid', description: 'ID of the blog' })
   async ConfirmUserRentRoom(
-    @Param('id') id: string,
+    @Param('blogid') id: string,
+    @Param('renterid') renterId: string,
     @CurrentUser() currentUser: JwtDecode,
   ) {
     const response = new ResponseBlog();
     try {
-      const result = await this.blogService.ConfirmUserRentRoom(id, currentUser)
+      const result = await this.blogService.ConfirmUserRentRoom(id,renterId, currentUser)
       return result;
     }
     catch (error) {
@@ -393,6 +512,60 @@ export class BlogController {
     const response = new ResponseBlog();
     try {
       const result = await this.blogService.GetRoomLessorRentOut(currentUser)
+      return result;
+    }
+    catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+
+  // lấy ra phòng đã thuê của chủ trọ
+  @Get('GetRentedRoomLessorRentOut')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  async GetRentedRoomLessorRentOut(
+    @CurrentUser() currentUser: JwtDecode,
+  ) {
+    const response = new ResponseBlog();
+    try {
+      const result = await this.blogService.GetRentedRoomLessorRentOut(currentUser)
+      return result;
+    }
+    catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+
+  //lấy ra phòng chưa cho thuê của chủ trọ
+  @Get('GetUnrentedRoomLessorRentOut')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  async GetUnrentedRoomLessorRentOut(
+    @CurrentUser() currentUser: JwtDecode,
+  ) {
+    const response = new ResponseBlog();
+    try {
+      const result = await this.blogService.GetUnrentedRoomLessorRentOut(currentUser)
+      return result;
+    }
+    catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+
+  // tìm bạn cùng phòng
+  @Get('GetRoomate')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  async getRoomate(
+    @CurrentUser() currentUser: JwtDecode,
+  ) {
+    const response = new ResponseBlog();
+    try {
+      const result = await this.blogService.getRoomate(currentUser)
       return result;
     }
     catch (error) {
