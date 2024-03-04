@@ -157,6 +157,7 @@ export class BlogService {
   async declineBlog(
     id: string,
     currentUser: JwtDecode,
+    hiddenReason: string
   ) {
     const user = await this.userModel.findById(currentUser.id);
     if (!AuthGuardUser.isAdmin(user)) {
@@ -169,10 +170,17 @@ export class BlogService {
       );
 
     }
-    const blogEdited = await this.blogModel.findByIdAndUpdate(id, { isAccepted: false }, {
+    const blog = await this.blogModel.findByIdAndUpdate(id, { isAccepted: false }, {
       new: true,
     });
-    return blogEdited;
+    blog.isHide = {
+      hidden: true,
+      content: hiddenReason,
+      day: new Date(),
+    };
+    await blog.save()
+    return blog
+
   }
 
   async blogRented(
@@ -241,13 +249,13 @@ export class BlogService {
         null,
       );
     }
-    const blogRented = await this.blogModel.findByIdAndUpdate(id, { Renterid : currentUser.id }, {
+    const blogRented = await this.blogModel.findByIdAndUpdate(id, { Renterid: currentUser.id }, {
       new: true,
     });
     return blogRented;
   }
 
- //  người thuê nhấn thuê 
+  //  người thuê nhấn thuê 
   async UserRentRoom(
     id: string,
     currentUser: JwtDecode,
@@ -271,7 +279,7 @@ export class BlogService {
         null,
       );
     }
-    const blogRented = await this.blogModel.findByIdAndUpdate(id, { Renterconfirm : currentUser.id }, {
+    const blogRented = await this.blogModel.findByIdAndUpdate(id, { Renterconfirm: currentUser.id }, {
       new: true,
     });
     return blogRented;
@@ -300,7 +308,7 @@ export class BlogService {
     return response
   }
 
-// lấy ra phòng người dùng thuê
+  // lấy ra phòng người dùng thuê
   async GetRoonRentedByUser(
     currentUser: JwtDecode,
   ) {
@@ -313,7 +321,7 @@ export class BlogService {
         null,
       );
     }
-    const blogRented = await this.blogModel.find( { Renterid : currentUser.id } );
+    const blogRented = await this.blogModel.find({ Renterid: currentUser.id });
     return ResponseHelper.response(
       HttpStatus.OK,
       Subject.BLOG,
@@ -327,9 +335,9 @@ export class BlogService {
   async GetRoomLessorRentOut(
     currentUser: JwtDecode,
   ) {
-    const user = await this.userModel.findById(currentUser.id)      
-    .populate('blogsPost')
-    .exec();;
+    const user = await this.userModel.findById(currentUser.id)
+      .populate('blogsPost')
+      .exec();;
     if (!AuthGuardUser.isLessor(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
@@ -344,6 +352,6 @@ export class BlogService {
       Content.SUCCESSFULLY,
       user.blogsPost,
       Field.READ
-  ) 
+    )
   }
 }

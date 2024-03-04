@@ -31,6 +31,7 @@ import { BlogMessage, UserMessage } from 'src/enums';
 import { AuthGuardUser } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/decorator/user.decorator';
 import { JwtDecode } from '../auth/types';
+import { ToggleBlockUserDTO } from '../auth/dto/toggleBlockUser.dto';
 @ApiTags('Blog')
 @Controller('blog')
 export class BlogController {
@@ -241,10 +242,12 @@ export class BlogController {
   async declineBlog(
     @Param('id') id: string,
     @CurrentUser() currentUser: JwtDecode,
+    @Body() dto: ToggleBlockUserDTO
   ) {
     const response = new ResponseBlog();
+    const { blockReason } = dto;
     try {
-      const result = await this.blogService.declineBlog(id, currentUser)
+      const result = await this.blogService.declineBlog(id, currentUser, blockReason)
       return result;
     } catch (error) {
       response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);

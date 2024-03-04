@@ -49,9 +49,9 @@ export class Blog {
     @Prop()
     star: number
     @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
-    Renterconfirm: string []
+    Renterconfirm: string[]
     @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
-    Renterid: string []
+    Renterid: string[]
     @Prop({ default: false })
     isRented: boolean
     @Prop({ default: 0 })
