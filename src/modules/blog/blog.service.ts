@@ -78,25 +78,21 @@ export class BlogService {
     }
     return response
   }
-  async hiddenBlog(id: string, hiddenReason: string): Promise<any> {
+  async hiddenBlog(id: string): Promise<any> {
     try {
       const blog = await this.blogModel.findById(id);
-      blog.isHide = {
-        isBlock: !blog.isHide?.hidden || false,
-        content: hiddenReason,
-        day: new Date(),
-      };
-      await blog.save()
-      if (blog.isHide?.hidden) {
-        return { status: 200, message: 'Hidden blog successfully' };
-      } else {
-        return { status: 200, message: 'Active blog successfully' };
+      const timestamp = new Date(blog.expiredTime).getTime(); // Chia cho 1000 để chuyển từ milliseconds sang seconds
+      if (Date.now() === timestamp) {
+        blog.isHide = {
+          hidden: true,
+          content: 'Hết thời gian của bài đăng',
+          day: new Date()
+        }
       }
-    } catch (error) {
-      return { status: 500, message: "Internal server error" };
+      await blog.save()
+    } catch (err) {
+      console.log("err", err)
     }
-
-
   }
   async editBlog(id: string, data: editBlogDTO): Promise<Blog> {
     const blog = await this.blogModel.findById(id);
@@ -134,17 +130,13 @@ export class BlogService {
     return response
   }
 
-  async getAllAcceptBlogAdmin(currentUser: JwtDecode, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
-    const user = await this.userModel.findById(currentUser.id);
-    if (!AuthGuardUser.isAdmin(user)) {
-      return null;
-    }
+  async getAllAcceptBlogAdmin(limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
     const skipNumber = (page - 1) * limit;
     const allBlog = await this.blogModel
-      .find({isAccepted: true})
+      .find({ isAccepted: true })
       .skip(skipNumber)
       .limit(limit)
-    const totalBlog = await this.blogModel.countDocuments({isAccepted: true})
+    const totalBlog = await this.blogModel.countDocuments({ isAccepted: true })
     const response = {
       totalBlog: totalBlog,
       allBlog: allBlog,
@@ -160,9 +152,9 @@ export class BlogService {
       return null;
     }
     const skipNumber = (page - 1) * limit;
-    const totalBlog = await this.blogModel.countDocuments({isAccepted: false})
+    const totalBlog = await this.blogModel.countDocuments({ isAccepted: false })
     const allBlog = await this.blogModel
-      .find({isAccepted: false})
+      .find({ isAccepted: false })
       .skip(skipNumber)
       .limit(limit)
     const response = {
@@ -180,9 +172,9 @@ export class BlogService {
       return null;
     }
     const skipNumber = (page - 1) * limit;
-    const totalBlog = await this.blogModel.countDocuments({isRented: true})
+    const totalBlog = await this.blogModel.countDocuments({ isRented: true })
     const allBlog = await this.blogModel
-      .find({isRented: true})
+      .find({ isRented: true })
       .skip(skipNumber)
       .limit(limit)
     const response = {
@@ -200,9 +192,9 @@ export class BlogService {
       return null;
     }
     const skipNumber = (page - 1) * limit;
-    const totalBlog = await this.blogModel.countDocuments({isRented: false})
+    const totalBlog = await this.blogModel.countDocuments({ isRented: false })
     const allBlog = await this.blogModel
-      .find({isRented: false})
+      .find({ isRented: false })
       .skip(skipNumber)
       .limit(limit)
     const response = {
@@ -213,7 +205,6 @@ export class BlogService {
     }
     return response
   }
-
 
   async acceptBlog(
     id: string,
@@ -238,6 +229,7 @@ export class BlogService {
   async declineBlog(
     id: string,
     currentUser: JwtDecode,
+    hiddenReason: string
   ) {
     const user = await this.userModel.findById(currentUser.id);
     if (!AuthGuardUser.isAdmin(user)) {
@@ -250,10 +242,17 @@ export class BlogService {
       );
 
     }
-    const blogEdited = await this.blogModel.findByIdAndUpdate(id, { isAccepted: false }, {
+    const blog = await this.blogModel.findByIdAndUpdate(id, { isAccepted: false }, {
       new: true,
     });
-    return blogEdited;
+    blog.isHide = {
+      hidden: true,
+      content: hiddenReason,
+      day: new Date(),
+    };
+    await blog.save()
+    return blog
+
   }
 
   async blogRented(
@@ -324,15 +323,15 @@ export class BlogService {
       );
     }
     const blogRented = await this.blogModel.findByIdAndUpdate(blogId,
-      { 
-       $addToSet: { Renterid: renterId }, 
-       $pull: { Renterconfirm: renterId },
+      {
+        $addToSet: { Renterid: renterId },
+        $pull: { Renterconfirm: renterId },
       },
       { new: true });
     return blogRented;
   }
 
- //  người thuê nhấn thuê 
+  //  người thuê nhấn thuê 
   async UserRentRoom(
     id: string,
     currentUser: JwtDecode,
@@ -356,9 +355,9 @@ export class BlogService {
         null,
       );
     }
-    const blogRented = await this.blogModel.findByIdAndUpdate(id,{ 
-      $addToSet: { Renterid: currentUser.id }, 
-     }, {
+    const blogRented = await this.blogModel.findByIdAndUpdate(id, {
+      $addToSet: { Renterid: currentUser.id },
+    }, {
       new: true,
     });
     return blogRented;
@@ -387,7 +386,7 @@ export class BlogService {
     return response
   }
 
-// lấy ra phòng người dùng thuê
+  // lấy ra phòng người dùng thuê
   async GetRoonRentedByUser(
     currentUser: JwtDecode,
   ) {
@@ -400,7 +399,7 @@ export class BlogService {
         null,
       );
     }
-    const blogRented = await this.blogModel.find( { Renterid : currentUser.id } );
+    const blogRented = await this.blogModel.find({ Renterid: currentUser.id });
     return ResponseHelper.response(
       HttpStatus.OK,
       Subject.BLOG,
@@ -414,9 +413,9 @@ export class BlogService {
   async GetRoomLessorRentOut(
     currentUser: JwtDecode,
   ) {
-    const user = await this.userModel.findById(currentUser.id)      
-    .populate('blogsPost')
-    .exec();;
+    const user = await this.userModel.findById(currentUser.id)
+      .populate('blogsPost')
+      .exec();;
     if (!AuthGuardUser.isLessor(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
@@ -431,18 +430,18 @@ export class BlogService {
       Content.SUCCESSFULLY,
       user.blogsPost,
       Field.READ
-  ) 
+    )
   }
 
   async GetRentedRoomLessorRentOut(
     currentUser: JwtDecode,
   ) {
-    const user = await this.userModel.findById(currentUser.id)      
-    .populate({
-      path: 'blogsPost',
-      match: { isRented: true },
-    })
-    .exec();;
+    const user = await this.userModel.findById(currentUser.id)
+      .populate({
+        path: 'blogsPost',
+        match: { isRented: true },
+      })
+      .exec();;
     if (!AuthGuardUser.isLessor(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
@@ -457,18 +456,18 @@ export class BlogService {
       Content.SUCCESSFULLY,
       user.blogsPost,
       Field.READ
-  ) 
+    )
   }
 
   async GetUnrentedRoomLessorRentOut(
     currentUser: JwtDecode,
   ) {
-    const user = await this.userModel.findById(currentUser.id)      
-    .populate({
-      path: 'blogsPost',
-      match: { isRented: false },
-    })
-    .exec();;
+    const user = await this.userModel.findById(currentUser.id)
+      .populate({
+        path: 'blogsPost',
+        match: { isRented: false },
+      })
+      .exec();;
     if (!AuthGuardUser.isLessor(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
@@ -483,16 +482,16 @@ export class BlogService {
       Content.SUCCESSFULLY,
       user.blogsPost,
       Field.READ
-  ) 
+    )
   }
 
   async getRoomate(
     currentUser: JwtDecode,
   ) {
-    const roomrented = await this.blogModel.find({Renterid: currentUser.id})
+    const roomrented = await this.blogModel.find({ Renterid: currentUser.id })
     const roomateId = roomrented
-    .filter((blog) => !blog.Renterid.includes(currentUser.id.toString()))
-    .map((blog) => blog.Renterid);
+      .filter((blog) => !blog.Renterid.includes(currentUser.id.toString()))
+      .map((blog) => blog.Renterid);
 
     const roomate = await this.userModel.find({ _id: { $in: roomateId } });
     return ResponseHelper.response(
@@ -501,7 +500,7 @@ export class BlogService {
       Content.SUCCESSFULLY,
       roomate,
       Field.READ
-  ) 
+    )
   }
 
 }

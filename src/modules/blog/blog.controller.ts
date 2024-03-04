@@ -27,10 +27,11 @@ import {
   getAllDTO,
   searchBlogDTO,
 } from './dto';
-import { BlogMessage, UserMessage } from 'src/enums';
+import { BlogMessage } from 'src/enums';
 import { AuthGuardUser } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/decorator/user.decorator';
 import { JwtDecode } from '../auth/types';
+import { ToggleBlockUserDTO } from '../auth/dto/toggleBlockUser.dto';
 @ApiTags('Blog')
 @Controller('blog')
 export class BlogController {
@@ -116,63 +117,60 @@ export class BlogController {
     }
   }
 
-    // lấy tất cả các blog đã accept
-    @Get('getAllAccepted/admin')
-    @ApiBearerAuth('JWT-auth')
-    @HttpCode(200)
-    @UseGuards(AuthGuardUser)
-    @ApiOkResponse({
-      type: () => ResponseBlog,
-    })
-    @ApiQuery({ name: 'limit', required: false })
-    @ApiQuery({ name: 'page', required: false })
-    async getAllAcceptBlogAdmin(
-      @CurrentUser() currentUser: JwtDecode,
-      @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
-      @Query('page', new ParseIntPipe({ optional: true })) page: number,
-    ): Promise<ResponseBlog> {
-      const response = new ResponseBlog();
-      try {
-        response.setSuccess(
-          HttpStatus.OK,
-          BlogMessage.allBlogSuccess,
-          await this.blogService.getAllAcceptBlogAdmin(currentUser, limit, page),
-        );
-        return response;
-      } catch (error) {
-        response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
-        return response;
-      }
+  // lấy tất cả các blog đã accept
+  @Get('getAllAccepted/admin')
+  @HttpCode(200)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  async getAllAcceptBlogAdmin(
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page: number,
+  ): Promise<ResponseBlog> {
+    const response = new ResponseBlog();
+    try {
+      response.setSuccess(
+        HttpStatus.OK,
+        BlogMessage.allBlogSuccess,
+        await this.blogService.getAllAcceptBlogAdmin(limit, page),
+      );
+      return response;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
     }
+  }
 
-    // lấy tất cả các blog chưa accept
-    @Get('getAllUnaccepted/admin')
-    @ApiBearerAuth('JWT-auth')
-    @HttpCode(200)
-    @UseGuards(AuthGuardUser)
-    @ApiOkResponse({
-      type: () => ResponseBlog,
-    })
-    @ApiQuery({ name: 'limit', required: false })
-    @ApiQuery({ name: 'page', required: false })
-    async getAllUnacceptBlogAdmin(
-      @CurrentUser() currentUser: JwtDecode,
-      @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
-      @Query('page', new ParseIntPipe({ optional: true })) page: number,
-    ): Promise<ResponseBlog> {
-      const response = new ResponseBlog();
-      try {
-        response.setSuccess(
-          HttpStatus.OK,
-          BlogMessage.allBlogSuccess,
-          await this.blogService.getAllUnacceptBlogAdmin(currentUser, limit, page),
-        );
-        return response;
-      } catch (error) {
-        response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
-        return response;
-      }
+  // lấy tất cả các blog chưa accept
+  @Get('getAllUnaccepted/admin')
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(200)
+  @UseGuards(AuthGuardUser)
+  @ApiOkResponse({
+    type: () => ResponseBlog,
+  })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  async getAllUnacceptBlogAdmin(
+    @CurrentUser() currentUser: JwtDecode,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page: number,
+  ): Promise<ResponseBlog> {
+    const response = new ResponseBlog();
+    try {
+      response.setSuccess(
+        HttpStatus.OK,
+        BlogMessage.allBlogSuccess,
+        await this.blogService.getAllUnacceptBlogAdmin(currentUser, limit, page),
+      );
+      return response;
+    } catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
     }
+  }
 
   // lấy tất cả các blog đã thuê
   @Get('getAllRented/admin')
@@ -231,7 +229,7 @@ export class BlogController {
       return response;
     }
   }
-        
+
 
   // lấy theo category blog được accept -- > hiển thị trang home
   @Get('getAllAccepted/:category')
@@ -269,23 +267,18 @@ export class BlogController {
 
   // api tự hết thời gian của bài blog  --> chưa xong
   @Put('hidden/:id')
-  @ApiBearerAuth('JWT-auth')
   @ApiParam({ name: 'id', description: 'ID of the blog' })
   @HttpCode(200)
   @ApiOkResponse({
     type: () => ResponseBlog,
   })
-  async isHideBlog(@CurrentUser() currentUser: JwtDecode, @Param() body: { id: string }, @Body() hiddenReason: string): Promise<ResponseBlog> {
+  async isHideBlog(@Param() body: { id: string }): Promise<ResponseBlog> {
     const response = new ResponseBlog();
     try {
-      const isAdmin = currentUser.role === 'admin';
-      if (!isAdmin) {
-        throw new Error(UserMessage.isNotAdmin);
-      }
       response.setSuccess(
         HttpStatus.OK,
         BlogMessage.hiddenBlogSuccess,
-        await this.blogService.hiddenBlog(body.id, hiddenReason),
+        await this.blogService.hiddenBlog(body.id),
       );
       return response;
     } catch (error) {
@@ -358,10 +351,12 @@ export class BlogController {
   async declineBlog(
     @Param('id') id: string,
     @CurrentUser() currentUser: JwtDecode,
+    @Body() dto: ToggleBlockUserDTO
   ) {
     const response = new ResponseBlog();
+    const { blockReason } = dto;
     try {
-      const result = await this.blogService.declineBlog(id, currentUser)
+      const result = await this.blogService.declineBlog(id, currentUser, blockReason)
       return result;
     } catch (error) {
       response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
@@ -428,7 +423,7 @@ export class BlogController {
   ) {
     const response = new ResponseBlog();
     try {
-      const result = await this.blogService.ConfirmUserRentRoom(id,renterId, currentUser)
+      const result = await this.blogService.ConfirmUserRentRoom(id, renterId, currentUser)
       return result;
     }
     catch (error) {

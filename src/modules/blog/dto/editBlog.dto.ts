@@ -64,10 +64,6 @@ export class editBlogDTO {
     @ApiProperty({
         example: 2,
     })
-    @IsOptional()
-    @IsNumber()
-    totalRoom: number;
-
     @ApiProperty({
         example: RentalObject.BOTH,
     })
