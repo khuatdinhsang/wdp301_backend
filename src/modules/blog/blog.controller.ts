@@ -244,19 +244,17 @@ export class BlogController {
   })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'page', required: false })
-  @ApiQuery({ name: 'search', required: false })
   async getAllBlogAccepted(
     @Param() body: { category: getAllDTO },
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
     @Query('page', new ParseIntPipe({ optional: true })) page: number,
-    @Query('search') search?: string,
   ): Promise<ResponseBlog> {
     const response = new ResponseBlog();
     try {
       response.setSuccess(
         HttpStatus.OK,
         BlogMessage.allBlogSuccess,
-        await this.blogService.getAllBlogAccepted(body.category, limit, page, search),
+        await this.blogService.getAllBlogAccepted(body.category, limit, page),
       );
       return response;
     } catch (error) {
@@ -265,7 +263,7 @@ export class BlogController {
     }
   }
 
-  // api tự hết thời gian của bài blog  --> chưa xong
+  // api tự hết thời gian của bài blog  
   @Put('hidden/:id')
   @ApiParam({ name: 'id', description: 'ID of the blog' })
   @HttpCode(200)
@@ -454,25 +452,32 @@ export class BlogController {
   }
 
   // api search blog by price, area
-  @Post('searchBlog')
+  @Post('searchBlog/:category')
   @HttpCode(200)
+  @ApiParam({
+    name: 'category',
+    description: 'Category of the blog',
+    required: true,
+  })
   @ApiOkResponse({
     type: () => ResponseBlog,
   })
-
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'search', required: false })
   async searchBlog(
     @Body() body: searchBlogDTO,
+    @Param() param: { category: getAllDTO },
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
     @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    @Query('search') search?: string,
   ): Promise<ResponseBlog> {
     const response = new ResponseBlog();
     try {
       response.setSuccess(
         HttpStatus.OK,
         BlogMessage.allBlogSuccess,
-        await this.blogService.searchBlog(body, limit, page),
+        await this.blogService.searchBlog(param.category, body, limit, page, search),
       );
       return response;
     } catch (error) {

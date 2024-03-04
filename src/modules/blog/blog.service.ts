@@ -55,19 +55,11 @@ export class BlogService {
     const blogDetail = await this.blogModel.findById(id);
     return blogDetail as Blog;
   }
-  async getAllBlogAccepted(category: getAllDTO, limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
+  async getAllBlogAccepted(category: getAllDTO, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
     const skipNumber = (page - 1) * limit;
-    const conditions = {
-      $or: [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-      ],
-      $and: [{ category }, { isAccepted: true }]
-    };
-    const searchQuery = search ? conditions : { category, isAccepted: true };
-    const totalBlog = await this.blogModel.countDocuments(searchQuery)
+    const totalBlog = await this.blogModel.countDocuments({ category, isAccepted: true, 'isHide.hidden': false })
     const allBlog = await this.blogModel
-      .find(searchQuery)
+      .find({ category, isAccepted: true, 'isHide.hidden': false })
       .skip(skipNumber)
       .limit(limit)
     const response = {
@@ -364,17 +356,36 @@ export class BlogService {
   }
 
 
-  async searchBlog(body: searchBlogDTO, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
+  async searchBlog(param: getAllDTO, body: searchBlogDTO, limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
     const skipNumber = (page - 1) * limit;
-    const totalBlog = await this.blogModel.countDocuments({
+    const conditions = {
+      $or: [
+        { title: { $regex: search, $options: 'i' } },
+      ],
+      $and: [
+        {
+          money: { $gte: body.minPrice, $lte: body.maxPrice },
+          area: { $gte: body.minArea, $lte: body.maxArea },
+          isAccepted: true,
+          isHide: {
+            hidden: false
+          },
+          category: param
+        }
+      ]
+    };
+    const searchQuery = search ? conditions : {
       money: { $gte: body.minPrice, $lte: body.maxPrice },
       area: { $gte: body.minArea, $lte: body.maxArea },
-    })
+      isAccepted: true,
+      isHide: {
+        hidden: false
+      },
+      category: param
+    };
+    const totalBlog = await this.blogModel.countDocuments(searchQuery)
     const allBlog = await this.blogModel
-      .find({
-        money: { $gte: body.minPrice, $lte: body.maxPrice },
-        area: { $gte: body.minArea, $lte: body.maxArea },
-      })
+      .find(searchQuery)
       .skip(skipNumber)
       .limit(limit)
     const response = {

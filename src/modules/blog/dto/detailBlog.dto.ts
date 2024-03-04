@@ -15,7 +15,7 @@ export class getAllDTO {
     category: string
 }
 
-export class preBlogDTO{
+export class preBlogDTO {
 
     @ApiProperty({
     })
