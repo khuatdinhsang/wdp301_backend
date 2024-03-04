@@ -206,7 +206,6 @@ export class BlogService {
     return response
   }
 
-
   async acceptBlog(
     id: string,
     currentUser: JwtDecode,
