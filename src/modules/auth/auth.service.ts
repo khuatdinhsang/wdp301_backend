@@ -186,6 +186,17 @@ export class AuthService {
             console.error(error);
         }
     }
+    async getProfileUserOther(userId: string): Promise<User> {
+        try {
+            const user = await this.userModel.findById(userId).select('-password -refreshToken -role');
+            if (!user) {
+                throw new Error(UserMessage.userNotFound);
+            }
+            return user.toObject();
+        } catch (error) {
+            console.error(error);
+        }
+    }
     async changePassword(userId: number, data: ChangePasswordDTO): Promise<{ status: number, message: string, user?: User }> {
         try {
             const { currentPassword, newPassword } = data;

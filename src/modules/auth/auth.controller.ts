@@ -153,7 +153,6 @@ export class AuthController {
     @Get('profile')
     async profileDetail(@CurrentUser() currentUser: JwtDecode): Promise<ResponseProfileDetail> {
         const response = new ResponseProfileDetail();
-        console.log("aa")
         try {
             const userProfile = await this.authService.profileDetail(currentUser.id);
             response.setSuccess(HttpStatus.OK, UserMessage.profileDetailSuccess, userProfile);
@@ -327,6 +326,23 @@ export class AuthController {
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    // lấy thông tin của user khác 
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('/getProfileUserOther/:userId')
+    async getProfileUserOther(
+        @Param('userId') userId: string,
+    ): Promise<ResponseProfileDetail> {
+        const response = new ResponseProfileDetail();
+        try {
+            const userProfile = await this.authService.getProfileUserOther(userId);
+            response.setSuccess(HttpStatus.OK, UserMessage.profileDetailSuccess, userProfile);
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+        }
+        return response;
     }
 
 }

@@ -78,25 +78,21 @@ export class BlogService {
     }
     return response
   }
-  async hiddenBlog(id: string, hiddenReason: string): Promise<any> {
+  async hiddenBlog(id: string): Promise<any> {
     try {
       const blog = await this.blogModel.findById(id);
-      blog.isHide = {
-        isBlock: !blog.isHide?.hidden || false,
-        content: hiddenReason,
-        day: new Date(),
-      };
-      await blog.save()
-      if (blog.isHide?.hidden) {
-        return { status: 200, message: 'Hidden blog successfully' };
-      } else {
-        return { status: 200, message: 'Active blog successfully' };
+      const timestamp = new Date(blog.expiredTime).getTime(); // Chia cho 1000 để chuyển từ milliseconds sang seconds
+      if (Date.now() === timestamp) {
+        blog.isHide = {
+          hidden: true,
+          content: 'Hết thời gian của bài đăng',
+          day: new Date()
+        }
       }
-    } catch (error) {
-      return { status: 500, message: "Internal server error" };
+      await blog.save()
+    } catch (err) {
+      console.log("err", err)
     }
-
-
   }
   async editBlog(id: string, data: editBlogDTO): Promise<Blog> {
     const blog = await this.blogModel.findById(id);
@@ -134,11 +130,7 @@ export class BlogService {
     return response
   }
 
-  async getAllAcceptBlogAdmin(currentUser: JwtDecode, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
-    const user = await this.userModel.findById(currentUser.id);
-    if (!AuthGuardUser.isAdmin(user)) {
-      return null;
-    }
+  async getAllAcceptBlogAdmin(limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
     const skipNumber = (page - 1) * limit;
     const allBlog = await this.blogModel
       .find({ isAccepted: true })

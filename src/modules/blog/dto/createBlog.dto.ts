@@ -55,13 +55,6 @@ export class createBlogDTO {
     })
     @IsString()
     addressDetail: string;
-
-    @ApiProperty({
-        example: 2,
-    })
-    @IsNumber()
-    totalRoom: number;
-
     @ApiProperty({
         example: RentalObject.BOTH,
     })
