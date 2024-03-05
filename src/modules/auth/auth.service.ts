@@ -344,14 +344,14 @@ export class AuthService {
     }
     async getAllFavouriteBlogsByUserId(userId: number, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
         const skipNumber = (page - 1) * limit;
-        const totalBlog = await this.userModel.countDocuments({ _id: userId }).populate('blogsFavorite')
+        const user = await this.userModel.findById(userId)
         const allBlog = await this.userModel
             .find({ _id: userId })
             .skip(skipNumber)
             .limit(limit)
             .populate('blogsFavorite');
         const response = {
-            totalBlog,
+            totalBlog: user.blogsFavorite.length,
             allBlog,
             currentPage: (page),
             limit: (limit)
