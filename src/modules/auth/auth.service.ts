@@ -250,18 +250,23 @@ export class AuthService {
             if (!user) {
                 return { status: 404, message: UserMessage.userNotFound };
             }
-
-            user.block = {
-                isBlock: !user.block?.isBlock || false,
-                content: blockReason,
-                day: new Date(),
-            };
-
-            await user.save();
-            if (user.block?.isBlock) {
-                return { status: 200, message: UserMessage.toggleBlockUserSuccessfully };
-            } else {
+            const isBlocked = user.block?.isBlock || false;
+            if (isBlocked) {
+                user.block = {
+                    isBlock: false,
+                    content: '',
+                    day: null,
+                };
+                await user.save();
                 return { status: 200, message: UserMessage.unBlockUserSuccessfully };
+            } else {
+                user.block = {
+                    isBlock: true,
+                    content: blockReason,
+                    day: new Date(),
+                };
+                await user.save();
+                return { status: 200, message: UserMessage.toggleBlockUserSuccessfully };
             }
         } catch (error) {
             console.error("Error toggling block status:", error);
