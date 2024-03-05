@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose, { HydratedDocument } from "mongoose";
 
@@ -20,5 +21,10 @@ export class Blog_Rate {
   time: Date;
   @Prop()
   file: string[];
+  @Prop({ type: Date, default: Date.now })
+  createdAt: Date;
+
+  @Prop({ type: Date, default: Date.now })
+  updatedAt: Date;
 }
 export const BlogRateSchema = SchemaFactory.createForClass(Blog_Rate);
