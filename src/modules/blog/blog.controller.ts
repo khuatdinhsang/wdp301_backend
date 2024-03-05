@@ -574,5 +574,12 @@ export class BlogController {
     }
   }
 
+  @Get('GuestBlog/:blogid')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  getFilteredBlogs(@Param('blogid') blogId: string) {
+    return this.blogService.getFilteredBlogs(blogId);
+  }
+
 
 }

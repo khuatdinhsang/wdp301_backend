@@ -14,6 +14,7 @@ export enum Content {
     NEEDED = 'needed',
     MIN_VALUE = 'min',
     MAX_VALUE = 'max',
-    RENTED = 'rented'
+    RENTED = 'rented',
+    CHECK ='check'
   }
   

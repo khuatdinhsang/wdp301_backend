@@ -345,4 +345,11 @@ export class AuthController {
         return response;
     }
 
+    @Get('CheckFavoutireBlog/:blogid')
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    getFilteredBlogs(@Param('blogid') blogId: string, @CurrentUser() currentUser: JwtDecode,) {
+      return this.authService.checkFavoriteBlog(blogId, currentUser);
+    }
+
 }
