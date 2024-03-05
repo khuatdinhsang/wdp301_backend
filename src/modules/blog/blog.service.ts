@@ -514,4 +514,25 @@ export class BlogService {
     )
   }
 
+  async getFilteredBlogs(blogId: string) {
+    const currentBlog = await this.blogModel.findById(blogId);
+
+    if (!currentBlog) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_FOUND,
+        null,
+      ); ;
+    }
+
+    const query = {
+      _id: { $ne: blogId },
+      area: { $gt: currentBlog.area - 5, $lt: currentBlog.area + 5 },
+      money: { $gt: currentBlog.money - 500000, $lt: currentBlog.money + 500000 },
+    };
+
+    return this.blogModel.find(query).exec();
+  }
+
 }
