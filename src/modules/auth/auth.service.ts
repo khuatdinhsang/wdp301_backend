@@ -54,7 +54,6 @@ export class AuthService {
                 UserMessage.phoneNotExist
             )
         }
-        console.log("ads", userExist)
         if (userExist.block.isBlock) {
             throw new Error(
                 UserMessage.blockAccount
