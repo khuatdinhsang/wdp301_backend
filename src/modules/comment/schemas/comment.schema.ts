@@ -19,5 +19,10 @@ export class Comments {
   time: Date;
   @Prop()
   file: string[];
+  @Prop({ type: Date, default: Date.now })
+  createdAt: Date;
+
+  @Prop({ type: Date, default: Date.now })
+  updatedAt: Date;
 }
 export const CommentsSchema = SchemaFactory.createForClass(Comments);
