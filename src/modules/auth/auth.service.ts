@@ -359,4 +359,32 @@ export class AuthService {
         return response
     }
 
+    async checkFavoriteBlog(blogId: string, currentUser: JwtDecode) {
+        const user = await this.userModel.findById(currentUser.id);
+        if (!user) {
+            throw new Error(UserMessage.userNotFound);
+        }
+        const blog = await this.blogModel.findById(blogId);
+        if (!blog) {
+            throw new Error(UserMessage.blogNotFound);
+        }
+        const isFavorite = user.blogsFavorite.some(favoriteBlogId => favoriteBlogId.toString() === blogId.toString());
+        if (isFavorite) {
+            return ResponseHelper.response(
+                HttpStatus.OK,
+                Subject.FAVORITEBLOG,
+                Content.CHECK,
+                true,
+            );
+        } else {
+            return ResponseHelper.response(
+                HttpStatus.OK,
+                Subject.FAVORITEBLOG,
+                Content.CHECK,
+                false,
+            );
+        }
+
+    }
+
 }
