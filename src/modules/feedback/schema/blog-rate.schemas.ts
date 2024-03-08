@@ -3,7 +3,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose, { HydratedDocument } from "mongoose";
 
 export type BlogDocument = HydratedDocument<Blog_Rate>;
-@Schema()
+@Schema({ timestamps: true })
 export class Blog_Rate {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
   userId: string;
@@ -21,10 +21,10 @@ export class Blog_Rate {
   time: Date;
   @Prop()
   file: string[];
-  @Prop({ type: Date, default: Date.now })
-  createdAt: Date;
+  // @Prop({ type: Date, default: Date.now })
+  // createdAt: Date;
 
-  @Prop({ type: Date, default: Date.now })
-  updatedAt: Date;
+  // @Prop({ type: Date, default: Date.now })
+  // updatedAt: Date;
 }
 export const BlogRateSchema = SchemaFactory.createForClass(Blog_Rate);
