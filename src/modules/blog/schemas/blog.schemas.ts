@@ -4,7 +4,7 @@ import mongoose, { HydratedDocument } from "mongoose";
 import { CategoryRoom, HasTagRoom, RentalObject } from "src/enums";
 
 export type BlogDocument = HydratedDocument<Blog>;
-@Schema()
+@Schema({ timestamps: true })
 export class Blog {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
     userId: string
@@ -56,10 +56,10 @@ export class Blog {
     isRented: boolean
     @Prop({ default: 0 })
     avgBlogRate: number
-    @Prop({ type: Date, default: Date.now })
-    createdAt: Date;
+    // @Prop({ type: Date, default: Date.now })
+    // createdAt: Date;
 
-    @Prop({ type: Date, default: Date.now })
-    updatedAt: Date;
+    // @Prop({ type: Date, default: Date.now })
+    // updatedAt: Date;
 }
 export const BlogSchema = SchemaFactory.createForClass(Blog);

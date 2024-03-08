@@ -10,6 +10,7 @@ import { UploadModule } from './modules/common/upload/upload.modules';
 import { SmsModule } from './modules/common/sms/sms.modules';
 import { FeedbackModule } from './modules/feedback/feedback.modules';
 import { CommentModule } from './modules/comment/comment.module';
+import { TransactionModule } from './modules/transaction/transaction.module';
 // import { CorsModule } from '@nestjs/common';
 @Module({
   imports: [ConfigModule.forRoot({
@@ -30,6 +31,7 @@ import { CommentModule } from './modules/comment/comment.module';
     SmsModule,
     FeedbackModule,
     CommentModule,
+    TransactionModule
   ],
   controllers: [AppController],
   providers: [AppService],

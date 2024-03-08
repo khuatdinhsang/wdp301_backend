@@ -3,7 +3,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose, { HydratedDocument } from "mongoose";
 
 export type CommentsDocument = HydratedDocument<Comments>;
-@Schema()
+@Schema({ timestamps: true })
 export class Comments {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
   userId: string;
@@ -19,10 +19,10 @@ export class Comments {
   time: Date;
   @Prop()
   file: string[];
-  @Prop({ type: Date, default: Date.now })
-  createdAt: Date;
+  // @Prop({ type: Date, default: Date.now })
+  // createdAt: Date;
 
-  @Prop({ type: Date, default: Date.now })
-  updatedAt: Date;
+  // @Prop({ type: Date, default: Date.now })
+  // updatedAt: Date;
 }
 export const CommentsSchema = SchemaFactory.createForClass(Comments);

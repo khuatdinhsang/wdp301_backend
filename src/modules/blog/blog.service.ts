@@ -18,11 +18,14 @@ import { Content } from 'src/enums/content.enum';
 import { Subject } from 'src/enums/subject.enum';
 import { LIMIT_DOCUMENT } from '../../contants'
 import { Field } from 'src/enums/field.enum';
+import { Transaction } from '../transaction/schemas/transaction.schemas';
 @Injectable({})
 export class BlogService {
   constructor(
     @InjectModel(Blog.name) private blogModel: Model<Blog>,
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Transaction.name) private transactionModel: Model<Transaction>,
+
   ) { }
   async createBlog(data: createBlogDTO, currentUser: JwtDecode): Promise<Blog> {
     let hasTag = '';
@@ -210,11 +213,19 @@ export class BlogService {
         Content.NOT_PERMISSION,
         null,
       );
-
     }
     const blogEdited = await this.blogModel.findByIdAndUpdate(id, { isAccepted: true }, {
       new: true,
     });
+    const timestamp = new Date(blogEdited.expiredTime).getTime();
+    const timeDifference = timestamp - Date.now();
+    const daysDifference = timeDifference / (1000 * 60 * 60 * 24);
+    const transaction = await this.transactionModel.create({
+      userId: currentUser.id,
+      blogId: id,
+      totalMoney: Math.ceil(daysDifference) * 3000
+    })
+    console.log("da", transaction)
     return blogEdited;
   }
 
@@ -232,7 +243,6 @@ export class BlogService {
         Content.NOT_PERMISSION,
         null,
       );
-
     }
     const blog = await this.blogModel.findByIdAndUpdate(id, { isAccepted: false }, {
       new: true,
@@ -523,7 +533,7 @@ export class BlogService {
         Subject.BLOG,
         Content.NOT_FOUND,
         null,
-      ); ;
+      );;
     }
 
     const query = {
