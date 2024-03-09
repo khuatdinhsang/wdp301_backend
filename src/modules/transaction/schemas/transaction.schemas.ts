@@ -12,8 +12,8 @@ export class Transaction {
     blogId: string
     @Prop()
     totalMoney: number;
-    // @Prop({ type: Date, default: Date.now })
-    // createdAt: Date;
+    @Prop({ type: Date, default: Date.now })
+    createdAt: Date;
     // @Prop({ type: Date, default: Date.now })
     // updatedAt: Date;
 }

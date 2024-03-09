@@ -358,7 +358,7 @@ export class BlogService {
       );
     }
     const blogRented = await this.blogModel.findByIdAndUpdate(id, {
-      $addToSet: { Renterid: currentUser.id },
+      $addToSet: { Renterconfirm: currentUser.id },
     }, {
       new: true,
     });
@@ -543,6 +543,33 @@ export class BlogService {
     };
 
     return this.blogModel.find(query).exec();
+  }
+
+  async getWeeklyPostCount(currentUser: JwtDecode,) {
+
+    const user = await this.userModel.findById(currentUser.id);
+    if (!AuthGuardUser.isAdmin(user)) {
+        return ResponseHelper.response(
+          HttpStatus.ACCEPTED,
+          Subject.BLOG,
+          Content.NOT_PERMISSION,
+          null,
+        );
+  
+      }
+
+    const startOfWeek = new Date();
+    startOfWeek.setHours(0, 0, 0, 0);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+    const count = await this.blogModel.countDocuments({
+      createdAt: { $gte: startOfWeek, $lt: endOfWeek },
+    });
+
+    return count;
   }
 
 }
