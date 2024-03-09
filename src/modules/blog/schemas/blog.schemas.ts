@@ -56,8 +56,8 @@ export class Blog {
     isRented: boolean
     @Prop({ default: 0 })
     avgBlogRate: number
-    // @Prop({ type: Date, default: Date.now })
-    // createdAt: Date;
+    @Prop({ type: Date, default: Date.now })
+    createdAt: Date;
 
     // @Prop({ type: Date, default: Date.now })
     // updatedAt: Date;

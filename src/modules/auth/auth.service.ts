@@ -14,6 +14,7 @@ import ResponseHelper from 'src/utils/respones.until';
 import { Subject } from 'src/enums/subject.enum';
 import { Content } from 'src/enums/content.enum';
 import { LIMIT_DOCUMENT } from 'src/contants';
+import { AuthGuardUser } from './auth.guard';
 @Injectable({})
 export class AuthService {
     constructor(
@@ -386,5 +387,30 @@ export class AuthService {
         }
 
     }
+
+    async getWeeklySignUpCount(currentUser: JwtDecode) {
+        const user = await this.userModel.findById(currentUser.id);
+        if (!AuthGuardUser.isAdmin(user)) {
+            return ResponseHelper.response(
+              HttpStatus.ACCEPTED,
+              Subject.BLOG,
+              Content.NOT_PERMISSION,
+              null,
+            );
+      
+          }
+        const startOfWeek = new Date();
+        startOfWeek.setHours(0, 0, 0, 0);
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 7);
+    
+        const count = await this.userModel.countDocuments({
+          createdAt: { $gte: startOfWeek, $lt: endOfWeek },
+        });
+    
+        return count;
+      }
 
 }

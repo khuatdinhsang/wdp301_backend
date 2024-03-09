@@ -582,4 +582,12 @@ export class BlogController {
   }
 
 
+  @Get('weekly-post-count')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  async getWeeklyPostCount(@CurrentUser() currentUser: JwtDecode) {
+    const weekPostCount = await this.blogService.getWeeklyPostCount(currentUser);
+    return { weekPostCount };
+  }
+
 }

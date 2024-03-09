@@ -352,4 +352,11 @@ export class AuthController {
       return this.authService.checkFavoriteBlog(blogId, currentUser);
     }
 
+    @Get('weekly-sign-up-count')
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    async getWeeklySignUpCount(@CurrentUser() currentUser: JwtDecode) {
+      const weekSignUpCount = await this.authService.getWeeklySignUpCount(currentUser);
+      return { weekSignUpCount };
+    }
 }
