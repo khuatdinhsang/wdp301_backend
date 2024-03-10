@@ -430,6 +430,49 @@ export class BlogController {
     }
   }
 
+  // người cho thuê không xác nhận cho thuê
+  @Put('RentedRoomUnConfirm/:blogid/:renterid')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({ name: 'blogid', description: 'ID of the blog' })
+  @ApiParam({ name: 'renterid', description: 'ID of the blog' })
+  async LessorCancalUserRentRoom(
+    @Param('blogid') id: string,
+    @Param('renterid') renterId: string,
+    @CurrentUser() currentUser: JwtDecode,
+  ) {
+    const response = new ResponseBlog();
+    try {
+      const result = await this.blogService.LessorCancalUserRentRoom(id, renterId, currentUser)
+      return result;
+    }
+    catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+
+  // người bỏ thuê phòng đang chờ confirm
+  @Put('RentedUnrentRoom/:blogid')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  @ApiParam({ name: 'blogid', description: 'ID of the blog' })
+  async RenterUnRentRoom(
+    @Param('blogid') id: string,
+    @CurrentUser() currentUser: JwtDecode,
+  ) {
+    const response = new ResponseBlog();
+    try {
+      const result = await this.blogService.RenterUnRentRoom(id, currentUser)
+      return result;
+    }
+    catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+
+
   @Put('RentedRoom/:id')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
@@ -503,6 +546,24 @@ export class BlogController {
     }
   }
 
+  // lấy ra phòng người dùng chờ xác nhận thuê
+  @Get('ConfirmBlogUser')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  async GetRoomWaitingConfirmByUser(
+    @CurrentUser() currentUser: JwtDecode,
+  ) {
+    const response = new ResponseBlog();
+    try {
+      const result = await this.blogService.GetRoomWaitingConfirmByUser(currentUser)
+      return result;
+    }
+    catch (error) {
+      response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+      return response;
+    }
+  }
+
   @Get('GetRoomLessorRentOut')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
@@ -561,11 +622,12 @@ export class BlogController {
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
   async getRoomate(
+    @Param('blogid') blogId: string,
     @CurrentUser() currentUser: JwtDecode,
   ) {
     const response = new ResponseBlog();
     try {
-      const result = await this.blogService.getRoomate(currentUser)
+      const result = await this.blogService.getRoomate(blogId, currentUser)
       return result;
     }
     catch (error) {

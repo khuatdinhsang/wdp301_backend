@@ -333,6 +333,53 @@ export class BlogService {
     return blogRented;
   }
 
+  // người cho thuê không xác nhận cho thuê
+  async LessorCancalUserRentRoom(
+    blogId: string,
+    renterId: string,
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id);
+    if (!AuthGuardUser.isLessor(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+
+    }
+    const blogRented = await this.blogModel.findByIdAndUpdate(blogId,
+      {
+        $pull: { Renterconfirm: renterId },
+      },
+      { new: true });
+    return blogRented;
+  }
+
+  // người bỏ thuê phòng đang chờ confirm
+  async RenterUnRentRoom(
+    blogId: string,
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id);
+    if (!AuthGuardUser.isRenter(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+
+    }
+    const blogRented = await this.blogModel.findByIdAndUpdate(blogId,
+      {
+        $pull: { Renterconfirm: currentUser.id },
+      },
+      { new: true });
+    return blogRented;
+  }
+
   //  người thuê nhấn thuê 
   async UserRentRoom(
     id: string,
@@ -430,6 +477,29 @@ export class BlogService {
     )
   }
 
+    // lấy ra phòng người dùng chờ xác nhận thuê
+    async GetRoomWaitingConfirmByUser(
+      currentUser: JwtDecode,
+    ) {
+      const user = await this.userModel.findById(currentUser.id);
+      if (!AuthGuardUser.isRenter(user)) {
+        return ResponseHelper.response(
+          HttpStatus.ACCEPTED,
+          Subject.BLOG,
+          Content.NOT_PERMISSION,
+          null,
+        );
+      }
+      const blogRented = await this.blogModel.find({ Renterconfirm: currentUser.id });
+      return ResponseHelper.response(
+        HttpStatus.OK,
+        Subject.BLOG,
+        Content.SUCCESSFULLY,
+        blogRented,
+        Field.READ
+      )
+    }
+
   // lấy ra phòng người cho thuê đăng 
   async GetRoomLessorRentOut(
     currentUser: JwtDecode,
@@ -461,6 +531,10 @@ export class BlogService {
       .populate({
         path: 'blogsPost',
         match: { isRented: true },
+        populate: {
+          path: 'Renterid',
+          model: 'User',
+        }
       })
       .exec();;
     if (!AuthGuardUser.isLessor(user)) {
@@ -487,6 +561,10 @@ export class BlogService {
       .populate({
         path: 'blogsPost',
         match: { isRented: false },
+        populate: {
+          path: 'Renterid',
+          model: 'User',
+        }
       })
       .exec();;
     if (!AuthGuardUser.isLessor(user)) {
@@ -506,22 +584,40 @@ export class BlogService {
     )
   }
 
-  async getRoomate(
-    currentUser: JwtDecode,
-  ) {
-    const roomrented = await this.blogModel.find({ Renterid: currentUser.id })
-    const roomateId = roomrented
-      .filter((blog) => !blog.Renterid.includes(currentUser.id.toString()))
-      .map((blog) => blog.Renterid);
-
-    const roomate = await this.userModel.find({ _id: { $in: roomateId } });
-    return ResponseHelper.response(
-      HttpStatus.OK,
-      Subject.BLOG,
-      Content.SUCCESSFULLY,
-      roomate,
-      Field.READ
-    )
+  async getRoomate(blogId: string, currentUser: JwtDecode) {
+    try {
+      const blog = await this.blogModel.findById(blogId);
+  
+      if (!blog) {
+        return ResponseHelper.response(
+          HttpStatus.NOT_FOUND,
+          Subject.BLOG,
+          Content.NOT_FOUND,
+          null,
+          Field.READ
+        );
+      }
+  
+      const roomateId = blog.Renterid.filter(id => id !== currentUser.id.toString());
+  
+      const roomate = await this.userModel.find({ _id: { $in: roomateId } });
+  
+      return ResponseHelper.response(
+        HttpStatus.OK,
+        Subject.BLOG,
+        Content.SUCCESSFULLY,
+        roomate,
+        Field.READ
+      );
+    } catch (error) {
+      return ResponseHelper.response(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        Subject.BLOG,
+        Content.FAILED,
+        error.message,
+        Field.READ
+      );
+    }
   }
 
   async getFilteredBlogs(blogId: string) {
