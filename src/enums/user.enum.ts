@@ -1,6 +1,7 @@
 /* eslint-disable prettier/prettier */
 export enum UserMessage {
     phoneExist = "Phone number already exists",
+    emailExist = "Email already exists",
     passwordNotMatch = "Password not match confirmPassword",
     roleNotExist = "Role does not exist",
     phoneInValid = "Phone number is invalid",
@@ -28,6 +29,4 @@ export enum UserMessage {
     UnFavouriteBlogSuccessfully = "UnFavourite Blog Successfully",
     blogNotFound = "Blog Not Found",
     blockAccount = "Your account is currently locked"
-
-
 }

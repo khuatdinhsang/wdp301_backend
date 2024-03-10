@@ -159,7 +159,13 @@ export class AuthService {
                     return { status: 400, message: UserMessage.phoneExist };
                 }
             }
+            if (data.email && data.email !== user.email) {
+                const existingUserWithEmail = await this.userModel.findOne({ email: data.email });
 
+                if (existingUserWithEmail) {
+                    return { status: 400, message: UserMessage.emailExist };
+                }
+            }
             user.fullName = data.fullName || user.fullName;
             user.email = data.email || user.email;
             user.avatar = data.avatar || user.avatar;
@@ -392,25 +398,25 @@ export class AuthService {
         const user = await this.userModel.findById(currentUser.id);
         if (!AuthGuardUser.isAdmin(user)) {
             return ResponseHelper.response(
-              HttpStatus.ACCEPTED,
-              Subject.BLOG,
-              Content.NOT_PERMISSION,
-              null,
+                HttpStatus.ACCEPTED,
+                Subject.BLOG,
+                Content.NOT_PERMISSION,
+                null,
             );
-      
-          }
+
+        }
         const startOfWeek = new Date();
         startOfWeek.setHours(0, 0, 0, 0);
         startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-    
+
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(endOfWeek.getDate() + 7);
-    
+
         const count = await this.userModel.countDocuments({
-          createdAt: { $gte: startOfWeek, $lt: endOfWeek },
+            createdAt: { $gte: startOfWeek, $lt: endOfWeek },
         });
-    
+
         return count;
-      }
+    }
 
 }
