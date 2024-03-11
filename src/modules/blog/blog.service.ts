@@ -531,10 +531,16 @@ export class BlogService {
       .populate({
         path: 'blogsPost',
         match: { isRented: true },
-        populate: {
-          path: 'Renterid',
-          model: 'User',
-        }
+        populate: [
+          {
+            path: 'Renterid',
+            model: 'User',
+          },
+          {
+            path: 'Renterconfirm',
+            model: 'User',
+          },
+        ],
       })
       .exec();;
     if (!AuthGuardUser.isLessor(user)) {
@@ -561,10 +567,17 @@ export class BlogService {
       .populate({
         path: 'blogsPost',
         match: { isRented: false },
-        populate: {
-          path: 'Renterid',
-          model: 'User',
-        }
+        populate: [
+          {
+            path: 'Renterid',
+            model: 'User',
+          },
+          {
+            path: 'Renterconfirm',
+            model: 'User',
+          },
+        ],
+        
       })
       .exec();;
     if (!AuthGuardUser.isLessor(user)) {
