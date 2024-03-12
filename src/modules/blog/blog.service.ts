@@ -328,6 +328,7 @@ export class BlogService {
       {
         $addToSet: { Renterid: renterId },
         $pull: { Renterconfirm: renterId },
+        isRented: true
       },
       { new: true });
     return blogRented;
