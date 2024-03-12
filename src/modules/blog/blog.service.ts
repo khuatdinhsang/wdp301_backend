@@ -307,7 +307,7 @@ export class BlogService {
   ) {
     const user = await this.userModel.findById(currentUser.id);
     const blog = await this.blogModel.findById(blogId);
-    if (!AuthGuardUser.isLessor(user) || !AuthGuardUser.isRenter(user)) {
+    if (!AuthGuardUser.isLessor(user) && !AuthGuardUser.isRenter(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,
@@ -341,7 +341,7 @@ export class BlogService {
     currentUser: JwtDecode,
   ) {
     const user = await this.userModel.findById(currentUser.id);
-    if (!AuthGuardUser.isLessor(user) || !AuthGuardUser.isRenter(user)) {
+    if (!AuthGuardUser.isLessor(user) && !AuthGuardUser.isRenter(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,
