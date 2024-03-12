@@ -618,7 +618,7 @@ export class BlogController {
   }
 
   // tìm bạn cùng phòng
-  @Get('GetRoomate')
+  @Get('GetRoomate/:blogid')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
   async getRoomate(
