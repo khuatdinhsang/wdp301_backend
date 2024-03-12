@@ -627,7 +627,9 @@ export class BlogController {
   ) {
     const response = new ResponseBlog();
     try {
+      console.log("Da")
       const result = await this.blogService.getRoomate(blogId, currentUser)
+      console.log("da", blogId)
       return result;
     }
     catch (error) {

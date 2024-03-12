@@ -599,6 +599,7 @@ export class BlogService {
   }
 
   async getRoomate(blogId: string, currentUser: JwtDecode) {
+    console.log('blog', blogId)
     try {
       const blog = await this.blogModel.findById(blogId);
 
