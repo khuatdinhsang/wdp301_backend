@@ -307,7 +307,7 @@ export class BlogService {
   ) {
     const user = await this.userModel.findById(currentUser.id);
     const blog = await this.blogModel.findById(blogId);
-    if (!AuthGuardUser.isLessor(user)) {
+    if (!AuthGuardUser.isLessor(user) || !AuthGuardUser.isRenter(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,
@@ -340,7 +340,7 @@ export class BlogService {
     currentUser: JwtDecode,
   ) {
     const user = await this.userModel.findById(currentUser.id);
-    if (!AuthGuardUser.isLessor(user)) {
+    if (!AuthGuardUser.isLessor(user) || !AuthGuardUser.isRenter(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,
@@ -477,28 +477,28 @@ export class BlogService {
     )
   }
 
-    // lấy ra phòng người dùng chờ xác nhận thuê
-    async GetRoomWaitingConfirmByUser(
-      currentUser: JwtDecode,
-    ) {
-      const user = await this.userModel.findById(currentUser.id);
-      if (!AuthGuardUser.isRenter(user)) {
-        return ResponseHelper.response(
-          HttpStatus.ACCEPTED,
-          Subject.BLOG,
-          Content.NOT_PERMISSION,
-          null,
-        );
-      }
-      const blogRented = await this.blogModel.find({ Renterconfirm: currentUser.id });
+  // lấy ra phòng người dùng chờ xác nhận thuê
+  async GetRoomWaitingConfirmByUser(
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id);
+    if (!AuthGuardUser.isRenter(user)) {
       return ResponseHelper.response(
-        HttpStatus.OK,
+        HttpStatus.ACCEPTED,
         Subject.BLOG,
-        Content.SUCCESSFULLY,
-        blogRented,
-        Field.READ
-      )
+        Content.NOT_PERMISSION,
+        null,
+      );
     }
+    const blogRented = await this.blogModel.find({ Renterconfirm: currentUser.id });
+    return ResponseHelper.response(
+      HttpStatus.OK,
+      Subject.BLOG,
+      Content.SUCCESSFULLY,
+      blogRented,
+      Field.READ
+    )
+  }
 
   // lấy ra phòng người cho thuê đăng 
   async GetRoomLessorRentOut(
@@ -577,7 +577,7 @@ export class BlogService {
             model: 'User',
           },
         ],
-        
+
       })
       .exec();;
     if (!AuthGuardUser.isLessor(user)) {
@@ -600,7 +600,7 @@ export class BlogService {
   async getRoomate(blogId: string, currentUser: JwtDecode) {
     try {
       const blog = await this.blogModel.findById(blogId);
-  
+
       if (!blog) {
         return ResponseHelper.response(
           HttpStatus.NOT_FOUND,
@@ -610,11 +610,11 @@ export class BlogService {
           Field.READ
         );
       }
-  
+
       const roomateId = blog.Renterid.filter(id => id !== currentUser.id.toString());
-  
+
       const roomate = await this.userModel.find({ _id: { $in: roomateId } });
-  
+
       return ResponseHelper.response(
         HttpStatus.OK,
         Subject.BLOG,
@@ -658,14 +658,14 @@ export class BlogService {
 
     const user = await this.userModel.findById(currentUser.id);
     if (!AuthGuardUser.isAdmin(user)) {
-        return ResponseHelper.response(
-          HttpStatus.ACCEPTED,
-          Subject.BLOG,
-          Content.NOT_PERMISSION,
-          null,
-        );
-  
-      }
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+
+    }
 
     const startOfWeek = new Date();
     startOfWeek.setHours(0, 0, 0, 0);
