@@ -125,16 +125,18 @@ export class BlogController {
   })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'title', required: false }) 
   async getAllAcceptBlogAdmin(
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
     @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    @Query('title') title?: string, 
   ): Promise<ResponseBlog> {
     const response = new ResponseBlog();
     try {
       response.setSuccess(
         HttpStatus.OK,
         BlogMessage.allBlogSuccess,
-        await this.blogService.getAllAcceptBlogAdmin(limit, page),
+        await this.blogService.getAllAcceptBlogAdmin(limit, page, title), // Truyền title vào service
       );
       return response;
     } catch (error) {
@@ -153,17 +155,19 @@ export class BlogController {
   })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'title', required: false }) 
   async getAllUnacceptBlogAdmin(
     @CurrentUser() currentUser: JwtDecode,
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
     @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    @Query('title') title?: string, 
   ): Promise<ResponseBlog> {
     const response = new ResponseBlog();
     try {
       response.setSuccess(
         HttpStatus.OK,
         BlogMessage.allBlogSuccess,
-        await this.blogService.getAllUnacceptBlogAdmin(currentUser, limit, page),
+        await this.blogService.getAllUnacceptBlogAdmin(currentUser, limit, page, title),
       );
       return response;
     } catch (error) {
@@ -171,7 +175,6 @@ export class BlogController {
       return response;
     }
   }
-
   // lấy tất cả các blog đã thuê
   @Get('getAllRented/admin')
   @ApiBearerAuth('JWT-auth')

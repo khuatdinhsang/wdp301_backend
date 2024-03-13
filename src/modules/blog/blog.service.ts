@@ -125,26 +125,40 @@ export class BlogService {
     return response
   }
 
-  async getAllAcceptBlogAdmin(limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
+  async getAllAcceptBlogAdmin(limit: number = LIMIT_DOCUMENT, page: number = 1, title?: string): Promise<any> {
     const skipNumber = (page - 1) * limit;
+    let query = { isAccepted: true };
+
+    if (title) {
+      query['title'] = { $regex: title, $options: 'i' };
+    }
+
     const allBlog = await this.blogModel
-      .find({ isAccepted: true })
+      .find(query)
       .skip(skipNumber)
-      .limit(limit)
-    const totalBlog = await this.blogModel.countDocuments({ isAccepted: true })
+      .limit(limit);
+
+    const totalBlog = await this.blogModel.countDocuments(query);
+
     const response = {
       totalBlog: totalBlog,
       allBlog: allBlog,
-      currentPage: (page),
-      limit: (limit)
-    }
-    return response
+      currentPage: page,
+      limit: limit
+    };
+    return response;
   }
 
-  async getAllUnacceptBlogAdmin(currentUser: JwtDecode, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
+
+  async getAllUnacceptBlogAdmin(currentUser: JwtDecode, limit: number = LIMIT_DOCUMENT, page: number = 1, title?: string): Promise<any> {
     const user = await this.userModel.findById(currentUser.id);
     if (!AuthGuardUser.isAdmin(user)) {
       return null;
+    }
+    let query = { isAccepted: true };
+
+    if (title) {
+      query['title'] = { $regex: title, $options: 'i' };
     }
     const skipNumber = (page - 1) * limit;
     const totalBlog = await this.blogModel.countDocuments({ isAccepted: false })
