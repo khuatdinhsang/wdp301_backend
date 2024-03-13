@@ -25,6 +25,8 @@ export class AuthController {
     })
     async register(@Body() body: registerDTO): Promise<ResponseRegister> {
         const response = new ResponseRegister()
+        console.log("body: ", body);
+        
         try {
             response.setSuccess(HttpStatus.OK, UserMessage.registerSuccess, await this.authService.register(body))
             return response
