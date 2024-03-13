@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Delete,
   HttpCode,
   HttpStatus,
   Param,
@@ -567,6 +568,7 @@ export class BlogController {
     }
   }
 
+  // lấy ra phòng trụ trọ đã đăng 
   @Get('GetRoomLessorRentOut')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
@@ -583,6 +585,24 @@ export class BlogController {
       return response;
     }
   }
+
+    // lấy ra phòng trụ trọ đã đăng 
+    @Get('GetRoomRenterPost')
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    async GetRoomRenterPost(
+      @CurrentUser() currentUser: JwtDecode,
+    ) {
+      const response = new ResponseBlog();
+      try {
+        const result = await this.blogService.GetRoomRenterPost(currentUser)
+        return result;
+      }
+      catch (error) {
+        response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+        return response;
+      }
+    }
 
   // lấy ra phòng đã thuê của chủ trọ
   @Get('GetRentedRoomLessorRentOut')
@@ -655,6 +675,14 @@ export class BlogController {
   async getWeeklyPostCount(@CurrentUser() currentUser: JwtDecode) {
     const weekPostCount = await this.blogService.getWeeklyPostCount(currentUser);
     return { weekPostCount };
+  }
+
+  @Delete('dleteBlog/:blogId')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  async deleteBlog(@Param('blogId') blogId: string) {
+    const result = await this.blogService.deleteBlog(blogId);
+    return result;
   }
 
 }
