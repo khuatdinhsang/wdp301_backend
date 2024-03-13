@@ -539,6 +539,29 @@ export class BlogService {
     )
   }
 
+  async GetRoomRenterPost(
+    currentUser: JwtDecode,
+  ) {
+    const user = await this.userModel.findById(currentUser.id)
+      .populate('blogsPost')
+      .exec();
+    if (!AuthGuardUser.isRenter(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+    }
+    return ResponseHelper.response(
+      HttpStatus.OK,
+      Subject.BLOG,
+      Content.SUCCESSFULLY,
+      user.blogsPost,
+      Field.READ
+    )
+  }
+
   async GetRentedRoomLessorRentOut(
     currentUser: JwtDecode,
   ) {
@@ -695,6 +718,29 @@ export class BlogService {
     });
 
     return count;
+  }
+
+  async deleteBlog(blogId: string) {
+    const currentBlog = await this.blogModel.findById(blogId);
+
+    if (!currentBlog) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_FOUND,
+        null,
+      );
+    }
+
+    const result = await this.blogModel.findByIdAndDelete({ _id: blogId }).exec();
+
+    return ResponseHelper.response(
+      HttpStatus.OK,
+      Subject.BLOG,
+      Content.SUCCESSFULLY,
+      result,
+      Field.READ
+    );
   }
 
 }
