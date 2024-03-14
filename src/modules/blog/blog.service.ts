@@ -60,9 +60,9 @@ export class BlogService {
   }
   async getAllBlogAccepted(category: getAllDTO, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
     const skipNumber = (page - 1) * limit;
-    const totalBlog = await this.blogModel.countDocuments({ category, isAccepted: true, 'isHide.hidden': false })
+    const totalBlog = await this.blogModel.countDocuments({ category, isAccepted: true, 'isHide.hidden': false, isRented: false })
     const allBlog = await this.blogModel
-      .find({ category, isAccepted: true, 'isHide.hidden': false })
+      .find({ category, isAccepted: true, 'isHide.hidden': false, isRented: false })
       .skip(skipNumber)
       .limit(limit)
     const response = {

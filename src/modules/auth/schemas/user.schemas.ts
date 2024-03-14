@@ -40,11 +40,11 @@ export class User {
     role: UserRole
     @Prop()
     idFacebook: string
-    @Prop({ type: Date, default: Date.now })
-    createdAt: Date;
+    // @Prop({ type: Date, default: Date.now })
+    // createdAt: Date;
 
-    @Prop({ type: Date, default: Date.now })
-    updatedAt: Date;
+    // @Prop({ type: Date, default: Date.now })
+    // updatedAt: Date;
 
 }
 
