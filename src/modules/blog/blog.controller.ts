@@ -622,7 +622,7 @@ export class BlogController {
     }
   }
 
-  //lấy ra phòng chưa cho thuê của chủ trọ
+  //lấy ra phòng chưa cho thuê và cũng chưa có người đk thuê của chủ trọ
   @Get('GetUnrentedRoomLessorRentOut')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
