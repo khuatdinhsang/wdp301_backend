@@ -685,4 +685,12 @@ export class BlogController {
     return result;
   }
 
+  // tìm các phòng đang chờ xác nhận cho thuê
+  @Get('findAllConfirmWaitingBlog/:userId')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  async findAllConfirmWaitingBlog(@CurrentUser() currentUser: JwtDecode) {
+    return this.blogService.findAllConfirmWaitingBlog(currentUser);
+  }
+
 }
