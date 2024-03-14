@@ -5,7 +5,7 @@ export enum UserMessage {
     passwordNotMatch = "Password not match confirmPassword",
     roleNotExist = "Role does not exist",
     phoneInValid = "Phone number is invalid",
-    fullnameIsValid = "Fullname can't include special characters",
+    fullnameIsValid = "Fullname không được phép có kí tự đặc biệt",
     registerSuccess = "Register successfully",
     loginSuccess = "Login successfully",
     phoneNotExist = "Phone number does not exist",

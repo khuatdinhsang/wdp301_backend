@@ -10,7 +10,7 @@ export class registerDTO {
     })
     @IsString()
     @IsNotEmpty()
-    @Matches(/^[a-zA-Z\s]+$/, { message: UserMessage.fullnameIsValid })
+    @Matches(/^[\p{L}\s]+$/u, { message: UserMessage.fullnameIsValid })
     fullName: string;
 
     @ApiProperty({
