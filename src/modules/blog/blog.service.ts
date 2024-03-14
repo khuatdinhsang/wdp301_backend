@@ -756,7 +756,13 @@ export class BlogService {
       );
 
     }
-    return this.blogModel.find({ userId, Renterconfirm: { $exists: true, $ne: [] } }).exec();
+    const blog = this.blogModel.find({ userId, isRented: false, Renterconfirm: { $exists: true, $ne: [] } })
+    .populate({
+      path: 'Renterconfirm',
+      model: 'User',
+    })
+    .exec();
+    return blog
   }
 
 }

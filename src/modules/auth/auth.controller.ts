@@ -175,15 +175,7 @@ export class AuthController {
         try {
             const result = await this.authService.changePassword(currentUser.id, changePasswordDto);
 
-            const response: ResponseChangePassword = new ResponseChangePassword();
-            response.isSuccess = true;
-            response.statusCode = HttpStatus.OK;
-            response.message = result.message;
-            // Kiểm tra nếu có user được trả về từ service, thêm user vào response
-            if (result.user) {
-                response.user = result.user;
-            }
-            return response;
+            return result;
         } catch (error) {
             const response: ResponseChangePassword = new ResponseChangePassword();
             response.setError(HttpStatus.INTERNAL_SERVER_ERROR, UserMessage.changePasswordFail);
