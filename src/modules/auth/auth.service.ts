@@ -6,7 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from './schemas/user.schemas';
 import * as bcrypt from 'bcrypt';
 import { HttpEnum, JwtEnum, UserMessage, UserRole } from 'src/enums';
-import { LoginDTO, dataTypeLogin, editProfileDTO, ChangePasswordDTO, refreshTokenDTO, registerDTO } from './dto';
+import { LoginDTO, dataTypeLogin, editProfileDTO, ChangePasswordDTO, refreshTokenDTO, registerDTO, ResponseChangePassword } from './dto';
 import { JwtDecode, JwtPayload, Tokens } from './types';
 import { Jwt } from 'src/common/jwt';
 import { Blog } from '../blog/schemas/blog.schemas';
@@ -203,27 +203,38 @@ export class AuthService {
             console.error(error);
         }
     }
-    async changePassword(userId: number, data: ChangePasswordDTO): Promise<{ status: number, message: string, user?: User }> {
+    async changePassword(userId: number, data: ChangePasswordDTO):  Promise<ResponseChangePassword> {
         try {
             const { currentPassword, newPassword } = data;
             const user = await this.userModel.findById(userId);
 
-            if (!user) {
-                return { status: 404, message: UserMessage.userNotFound };
-            }
-
             const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+
             if (!isCurrentPasswordValid) {
-                return { status: 400, message: UserMessage.passwordInValid };
+                const response: ResponseChangePassword = new ResponseChangePassword();
+                response.isSuccess = false;
+                response.statusCode = HttpStatus.BAD_REQUEST;
+                response.message = UserMessage.passwordInValid;
+                console.log("rés,", response);
+                
+                return response;
             }
 
             const hashedNewPassword = await bcrypt.hash(newPassword, 10);
             user.password = hashedNewPassword;
             await user.save();
 
-            return { status: 200, message: UserMessage.changePasswordSuccess };
+            const response: ResponseChangePassword = new ResponseChangePassword();
+                response.isSuccess = true;
+                response.statusCode = HttpStatus.OK;
+                response.message = UserMessage.changePasswordSuccess;
+                return response;
         } catch (error) {
-            return { status: 500, message: 'Internal Server Error' };
+            const response: ResponseChangePassword = new ResponseChangePassword();
+                response.isSuccess = false;
+                response.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+                response.message = UserMessage.changePasswordFail;
+                return response;
         }
     }
 
