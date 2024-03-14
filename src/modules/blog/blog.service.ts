@@ -604,7 +604,7 @@ export class BlogService {
     const user = await this.userModel.findById(currentUser.id)
       .populate({
         path: 'blogsPost',
-        match: { isRented: false },
+        match: { isRented: false, Renterconfirm: { $exists: true, $size: 0 } },
         populate: [
           {
             path: 'Renterid',
