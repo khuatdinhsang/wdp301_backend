@@ -622,7 +622,7 @@ export class BlogController {
     }
   }
 
-  //lấy ra phòng chưa cho thuê của chủ trọ
+  //lấy ra phòng chưa cho thuê và cũng chưa có người đk thuê của chủ trọ
   @Get('GetUnrentedRoomLessorRentOut')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
@@ -683,6 +683,14 @@ export class BlogController {
   async deleteBlog(@Param('blogId') blogId: string) {
     const result = await this.blogService.deleteBlog(blogId);
     return result;
+  }
+
+  // tìm các phòng đang chờ xác nhận cho thuê
+  @Get('findAllConfirmWaitingBlog/:userId')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  async findAllConfirmWaitingBlog(@CurrentUser() currentUser: JwtDecode) {
+    return this.blogService.findAllConfirmWaitingBlog(currentUser);
   }
 
 }

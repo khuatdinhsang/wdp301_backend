@@ -604,7 +604,7 @@ export class BlogService {
     const user = await this.userModel.findById(currentUser.id)
       .populate({
         path: 'blogsPost',
-        match: { isRented: false },
+        match: { isRented: false, Renterconfirm: { $exists: true, $size: 0 } },
         populate: [
           {
             path: 'Renterid',
@@ -741,6 +741,22 @@ export class BlogService {
       result,
       Field.READ
     );
+  }
+
+  async findAllConfirmWaitingBlog(currentUser: JwtDecode) {
+
+    const user = await this.userModel.findById(currentUser.id);
+    const userId = user._id;
+    if (!AuthGuardUser.isLessor(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+
+    }
+    return this.blogModel.find({ userId, Renterconfirm: { $exists: true, $ne: [] } }).exec();
   }
 
 }
