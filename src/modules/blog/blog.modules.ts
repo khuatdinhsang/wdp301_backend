@@ -7,10 +7,14 @@ import { BlogController } from './blog.controller';
 import { BlogService } from './blog.service';
 import { AuthGuardUser } from '../auth/auth.guard';
 import { User, UserSchema } from '../auth/schemas/user.schemas';
+import { Transaction, TransactionSchema } from '../transaction/schemas/transaction.schemas';
 
 @Module({
     imports: [
-        MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }, { name: User.name, schema: UserSchema },]),
+        MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema },
+        { name: User.name, schema: UserSchema },
+        { name: Transaction.name, schema: TransactionSchema }
+        ]),
         JwtModule.register({
             global: true,
         }),

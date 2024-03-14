@@ -8,7 +8,7 @@ export enum HasTagRoom {
     FIND_ROOMMATES = "#tim_nguoi_o_chung"
 }
 export enum RentalObject {
-    GIRL = "girl",
-    BOY = "boy",
+    FEMALE = "female",
+    MALE = "male",
     BOTH = "both"
 }

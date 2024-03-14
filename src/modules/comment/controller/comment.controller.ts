@@ -1,23 +1,23 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiBearerAuth, ApiConsumes, ApiOkResponse, ApiParam, ApiTags } from "@nestjs/swagger";
-import { ObjectId } from "mongoose";
+/* eslint-disable prettier/prettier */
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiOkResponse, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { Content } from "src/enums/content.enum";
 import { Field } from "src/enums/field.enum";
 import { Subject } from "src/enums/subject.enum";
 import { AuthGuardUser } from "src/modules/auth/auth.guard";
 import ResponseHelper from "src/utils/respones.until";
-import { createCommentDto, detailCommentDTO, getAllCommentDTO, updateCommentDto } from "../dtos/comment.dto";
+import { CreateCommentDto, UpdateCommentDto } from "../dtos/comment.dto";
 import { CommentService } from "../service/comment.service";
-import { FileInterceptor } from "@nestjs/platform-express/multer";
-
+import { CurrentUser } from "src/modules/auth/decorator/user.decorator";
+import { JwtDecode } from "src/modules/auth/types/jwt.type";
 @ApiTags('Comment')
 @Controller("comment")
 
-export class commentController{
+export class CommentController {
     constructor(private commentService: CommentService) { }
+
+    // tạo comment
     @Post('create')
-    @ApiConsumes('multipart/form-data')
-    @UseInterceptors(FileInterceptor('file'))
     @HttpCode(200)
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
@@ -25,14 +25,14 @@ export class commentController{
         type: () => ResponseHelper,
     })
     async create(
-        @Body() payload: createCommentDto,
-        @UploadedFile() file: Express.Multer.File,
-    ) {
+        @Body() payload: CreateCommentDto,
+        @CurrentUser() currentUser: JwtDecode,
+    ): Promise<ResponseHelper> {
         try {
-            const result = await this.commentService.create({...payload, file: file})
+            const result = await this.commentService.create(payload, currentUser)
             return ResponseHelper.response(
                 HttpStatus.OK,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.SUCCESSFULLY,
                 result,
                 Field.CREATE
@@ -40,7 +40,7 @@ export class commentController{
         } catch (error) {
             return ResponseHelper.response(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.FAILED,
                 error,
                 Field.CREATE
@@ -48,19 +48,52 @@ export class commentController{
         }
     }
 
-    @Get('GetAll')
+    // tạm thời chưa dùng đến
+    // @Get('GetAll')
+    // @HttpCode(200)
+    // @ApiOkResponse({
+    //     type: () => ResponseHelper,
+    // })
+    // async getAll(): Promise<ResponseHelper> {
+    //     try {
+    //         const result = await this.commentService.getAll()
+    //         return ResponseHelper.response(
+    //             HttpStatus.OK,
+    //             Subject.COMMENT,
+    //             Content.SUCCESSFULLY,
+    //             result,
+    //             Field.READ
+    //         )
+    //     } catch (error) {
+    //         return ResponseHelper.response(
+    //             HttpStatus.INTERNAL_SERVER_ERROR,
+    //             Subject.COMMENT,
+    //             Content.FAILED,
+    //             error,
+    //             Field.READ
+    //         )
+    //     }
+    // }
+
+
+    // lấy tất cả các comment của 1 feedbackid
+    @Get('GetAll/:feedbackId')
     @HttpCode(200)
-    @UseGuards(AuthGuardUser)
-    @ApiBearerAuth('JWT-auth')
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
     @ApiOkResponse({
         type: () => ResponseHelper,
     })
-    async getAll(@Body() payload: getAllCommentDTO): Promise<ResponseHelper> {
+    async getAllByBlogId(
+        @Param('feedbackId') feedbackId: string,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+        @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    ): Promise<ResponseHelper> {
         try {
-            const result = await this.commentService.getAll(payload)
+            const result = await this.commentService.getAllByFeedbackId(feedbackId, limit, page)
             return ResponseHelper.response(
                 HttpStatus.OK,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.SUCCESSFULLY,
                 result,
                 Field.READ
@@ -68,7 +101,7 @@ export class commentController{
         } catch (error) {
             return ResponseHelper.response(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.FAILED,
                 error,
                 Field.READ
@@ -76,10 +109,8 @@ export class commentController{
         }
     }
 
+    // update comment
     @Patch('update/:id')
-    @ApiConsumes('multipart/form-data')
-    @UseInterceptors(FileInterceptor('file'))
-    @ApiParam({ name: 'id', description: 'ID of the comment', required: true })
     @HttpCode(200)
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
@@ -88,17 +119,16 @@ export class commentController{
         description: 'Cập nhật thành công',
     })
     async update(
-        @Param('id') id: detailCommentDTO,
-        @Body() payload: updateCommentDto,
-        @UploadedFile() file: Express.Multer.File,
-        ) {
+        @Param('id') id: string,
+        @Body() payload: UpdateCommentDto,
+    ) {
         try {
-            const result = await this.commentService.update(id, {...payload, file: file})
+            const result = await this.commentService.update(id, payload)
             return result
         } catch (error) {
             return ResponseHelper.response(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.FAILED,
                 error,
                 Field.UPDATE
@@ -106,25 +136,25 @@ export class commentController{
         }
     }
 
+    // delete comment
     @Delete('delete/:id')
     @HttpCode(200)
-    @ApiParam({ name: 'id', description: 'ID of the comment', required: true })
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @ApiOkResponse({
         type: () => ResponseHelper,
     })
-    async delete(@Param() id:detailCommentDTO): Promise<ResponseHelper> {
+    async delete(@Param('id') id: string): Promise<ResponseHelper> {
         try {
             const result = await this.commentService.delete(id)
             return result
         } catch (error) {
             return ResponseHelper.response(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                Subject.FEEDBACK,
+                Subject.COMMENT,
                 Content.FAILED,
                 error,
-                Field.UPDATE
+                Field.DELETE
             )
         }
     }

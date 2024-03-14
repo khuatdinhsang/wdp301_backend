@@ -1,49 +1,44 @@
+/* eslint-disable prettier/prettier */
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString, NotEquals } from "class-validator";
-import { ObjectId } from "mongoose";
+import { IsArray, IsNotEmpty, IsString } from "class-validator";
 
-export class createCommentDto {
+export class CreateCommentDto {
 
-    @IsNotEmpty()
-    @NotEquals(null)
-    @ApiProperty({
-        description: 'content comment',
-        default: 'comment 1',
-      })
-    content: string;
-    
-    @ApiProperty({ type: 'string', format: 'binary', required: false })
-    file: Express.Multer.File;
+  @IsString()
+  @ApiProperty({
+    description: 'đánh giá',
+    default: 'đánh giá 1',
+  })
+  title: string;
 
-    @IsNotEmpty()
-    @NotEquals(null)
-    @ApiProperty({
-        description: 'người đánh giá',
-      })
-    feedBackId: ObjectId;
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'bài đăng',
+    example: '65dc8a47cccd796be62f226d',
+  })
+  feedbackId: string;
+
+  @ApiProperty({
+    example: ["http://img1.jpg", "http://img2.jpg"],
+  })
+  @IsArray()
+  @IsString({ each: true })
+  file: string[];
 }
-export class updateCommentDto {
-    @IsNotEmpty()
-    @NotEquals(null)
-    @ApiProperty({
-        description: 'content comment',
-        default: 'comment 1',
-      })
-    content: string;
-    
-    @ApiProperty({ type: 'string', format: 'binary', required: false })
-    file: Express.Multer.File;
-}
+export class UpdateCommentDto {
 
-export class getAllCommentDTO {
-    @ApiProperty({
-    })
-    feedBackId: ObjectId
-}
+  @IsString()
+  @ApiProperty({
+    description: 'đánh giá',
+    default: 'đánh giá 1',
+  })
+  title: string;
 
-export class detailCommentDTO {
-    @ApiProperty({
-        example: '65a8944d9aae07aa4a0ac615',
-    })
-    id: ObjectId
+  @ApiProperty({
+    example: ["http://img1.jpg", "http://img2.jpg"],
+  })
+  @IsArray()
+  @IsString({ each: true })
+  file: string[];
+
 }

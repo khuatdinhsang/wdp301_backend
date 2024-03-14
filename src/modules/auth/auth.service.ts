@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './schemas/user.schemas';
 import * as bcrypt from 'bcrypt';
@@ -9,8 +9,12 @@ import { HttpEnum, JwtEnum, UserMessage, UserRole } from 'src/enums';
 import { LoginDTO, dataTypeLogin, editProfileDTO, ChangePasswordDTO, refreshTokenDTO, registerDTO } from './dto';
 import { JwtDecode, JwtPayload, Tokens } from './types';
 import { Jwt } from 'src/common/jwt';
-import { detailBlogDTO } from '../blog/dto';
 import { Blog } from '../blog/schemas/blog.schemas';
+import ResponseHelper from 'src/utils/respones.until';
+import { Subject } from 'src/enums/subject.enum';
+import { Content } from 'src/enums/content.enum';
+import { LIMIT_DOCUMENT } from 'src/contants';
+import { AuthGuardUser } from './auth.guard';
 @Injectable({})
 export class AuthService {
     constructor(
@@ -51,6 +55,11 @@ export class AuthService {
                 UserMessage.phoneNotExist
             )
         }
+        if (userExist.block.isBlock) {
+            throw new Error(
+                UserMessage.blockAccount
+            )
+        }
         const comparePassword = bcrypt.compareSync(password, userExist.password)
         if (!comparePassword) {
             throw new Error(
@@ -77,11 +86,48 @@ export class AuthService {
         await this.userModel.findByIdAndUpdate(user._id, { $set: { refreshToken: tokens.refreshToken } }, { new: true })
         return tokens
     }
-    async favoriteBlog(data: detailBlogDTO, currentUser: JwtDecode): Promise<any> {
-        const user = await this.userModel.findById(currentUser.id)
-        const userUpdated = await this.userModel.findByIdAndUpdate(currentUser.id, { $set: { blogsFavorite: [...user.blogsFavorite, data.id] } }, { new: true })
-        await this.blogModel.findByIdAndUpdate(data.id, { $set: { totalFavorite: userUpdated.blogsFavorite.length } }, { new: true })
+
+
+    async favoriteBlog(data: { blogId: string }, currentUser: JwtDecode) {
+        // Tìm người dùng hiện tại
+        const user = await this.userModel.findById(currentUser.id);
+        if (!user) {
+            throw new Error(UserMessage.userNotFound);
+        }
+        const blog = await this.blogModel.findById(data.blogId);
+        if (!blog) {
+            throw new Error(UserMessage.blogNotFound);
+        }
+        const blogId = new mongoose.Types.ObjectId(data.blogId);
+        const isFavorite = user.blogsFavorite.some(favoriteBlogId => favoriteBlogId.toString() === blogId.toString());
+        if (isFavorite) {
+            user.blogsFavorite = user.blogsFavorite.filter(blogId => blogId.toString() !== data.blogId);
+            blog.totalFavorite -= 1;
+            await blog.save();
+        } else {
+            user.blogsFavorite.push(blog);
+            blog.totalFavorite += 1;
+            await blog.save();
+        }
+        await user.save();
+        if (isFavorite) {
+            return ResponseHelper.response(
+                HttpStatus.OK,
+                Subject.UNFAVORITEBLOG,
+                Content.SUCCESSFULLY,
+                user,
+            );
+        } else {
+            return ResponseHelper.response(
+                HttpStatus.OK,
+                Subject.FAVORITEBLOG,
+                Content.SUCCESSFULLY,
+                user,
+            );
+        }
     }
+
+
     async getTokens(payload: JwtPayload): Promise<Tokens> {
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
@@ -98,32 +144,43 @@ export class AuthService {
             refreshToken
         }
     }
-    async editUserProfile(userId: number, data: editProfileDTO): Promise<User> {
+    async editUserProfile(userId: number, data: editProfileDTO): Promise<{ status: number, message: string, user?: User }> {
         try {
-          const user = await this.userModel.findById(userId);
-    
-          if (!user) {
-            throw new Error(UserMessage.userNotFound);
-          }
-    
-          user.fullName = data.fullName;
-          if (data.email) user.email = data.email;
-          if (data.avatar) user.avatar = data.avatar;
-          if (data.fullName) user.fullName = data.fullName;
-          if (data.address) user.address = data.address;
-          if (data.gender) user.gender = data.gender;
-          if (data.phone) user.phone = data.phone;
-    
-          // Save the changes
-          const updatedUser = await user.save();
-    
-          // Return the updated user
-          return updatedUser.toObject();
+            const user = await this.userModel.findById(userId);
+
+            if (!user) {
+                return { status: 404, message: UserMessage.userNotFound };
+            }
+
+            if (data.phone && data.phone !== user.phone) {
+                const existingUserWithPhone = await this.userModel.findOne({ phone: data.phone });
+
+                if (existingUserWithPhone) {
+                    return { status: 400, message: UserMessage.phoneExist };
+                }
+            }
+            if (data.email && data.email !== user.email) {
+                const existingUserWithEmail = await this.userModel.findOne({ email: data.email });
+
+                if (existingUserWithEmail) {
+                    return { status: 400, message: UserMessage.emailExist };
+                }
+            }
+            user.fullName = data.fullName || user.fullName;
+            user.email = data.email || user.email;
+            user.avatar = data.avatar || user.avatar;
+            user.address = data.address || user.address;
+            user.gender = data.gender || user.gender;
+
+            const updatedUser = await user.save();
+
+            return { status: 200, message: UserMessage.editProfileSuccess, user: updatedUser.toObject() };
         } catch (error) {
-          console.error(error);
-          throw new Error(UserMessage.editUserProfileFail);
+            return { status: 500, message: 'Internal Server Error' };
         }
-      }
+    }
+
+
     async profileDetail(userId: number): Promise<User> {
         try {
             const user = await this.userModel.findById(userId).select('-password -refreshToken');
@@ -132,32 +189,234 @@ export class AuthService {
             }
             return user.toObject();
         } catch (error) {
-            console.error(error);            
+            console.error(error);
         }
     }
-    async changePassword(userId: number, data: ChangePasswordDTO): Promise<boolean> {
+    async getProfileUserOther(userId: string): Promise<User> {
+        try {
+            const user = await this.userModel.findById(userId).select('-password -refreshToken -role');
+            if (!user) {
+                throw new Error(UserMessage.userNotFound);
+            }
+            return user.toObject();
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    async changePassword(userId: number, data: ChangePasswordDTO): Promise<{ status: number, message: string, user?: User }> {
         try {
             const { currentPassword, newPassword } = data;
             const user = await this.userModel.findById(userId);
 
-            if (!user) {    
-                throw new Error(UserMessage.userNotFound);
+            if (!user) {
+                return { status: 404, message: UserMessage.userNotFound };
             }
+
             const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
             if (!isCurrentPasswordValid) {
-                throw new Error(UserMessage.passwordInValid);
+                return { status: 400, message: UserMessage.passwordInValid };
             }
-            const hashedNewPassword = bcrypt.hashSync(newPassword, 10);
+
+            const hashedNewPassword = await bcrypt.hash(newPassword, 10);
             user.password = hashedNewPassword;
             await user.save();
-            return true; 
+
+            return { status: 200, message: UserMessage.changePasswordSuccess };
         } catch (error) {
-            console.error(error);
-            throw new Error(UserMessage.changePasswordFail);
+            return { status: 500, message: 'Internal Server Error' };
         }
     }
 
-    async getAllRenters(): Promise<User[]> {
-        return this.userModel.find({ role: UserRole.RENTER }).exec();
-      }
+
+    async getAllRenters(limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
+        const skipNumber = (page - 1) * limit;
+        const conditions = {
+            $or: [
+                { fullName: { $regex: search, $options: 'i' } },
+            ],
+            $and: [{ role: UserRole.RENTER }]
+        };
+        const searchQuery = search ? conditions : { role: UserRole.RENTER };
+        const totalRenter = await this.userModel.countDocuments(searchQuery)
+        const allRenter = await this.userModel
+            .find(searchQuery)
+            .skip(skipNumber)
+            .limit(limit)
+        const response = {
+            totalRenter,
+            allRenter,
+            currentPage: (page),
+            limit: (limit)
+        }
+        return response
+    }
+    async toggleBlockUser(userId: string, blockReason: string): Promise<{ status: number; message: string } | User> {
+        try {
+            const user = await this.userModel.findById(userId);
+            if (!user) {
+                return { status: 404, message: UserMessage.userNotFound };
+            }
+            const isBlocked = user.block?.isBlock || false;
+            if (isBlocked) {
+                user.block = {
+                    isBlock: false,
+                    content: '',
+                    day: null,
+                };
+                await user.save();
+                return { status: 200, message: UserMessage.unBlockUserSuccessfully };
+            } else {
+                user.block = {
+                    isBlock: true,
+                    content: blockReason,
+                    day: new Date(),
+                };
+                await user.save();
+                return { status: 200, message: UserMessage.toggleBlockUserSuccessfully };
+            }
+        } catch (error) {
+            console.error("Error toggling block status:", error);
+            return { status: 500, message: "Internal server error" };
+        }
+    }
+    async getAllUsers(limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
+        const skipNumber = (page - 1) * limit;
+        const conditions = {
+            $or: [
+                { fullName: { $regex: search, $options: 'i' } },
+            ],
+            $and: [{ role: { $in: [UserRole.RENTER, UserRole.LESSOR] } }]
+        };
+        const searchQuery = search ? conditions : { role: { $in: [UserRole.RENTER, UserRole.LESSOR] } };
+        const totalUser = await this.userModel.countDocuments(searchQuery)
+        const allUser = await this.userModel
+            .find(searchQuery)
+            .skip(skipNumber)
+            .limit(limit)
+        const response = {
+            totalUser,
+            allUser,
+            currentPage: (page),
+            limit: (limit)
+        }
+        return response
+    }
+    async getAllLessors(limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
+        const skipNumber = (page - 1) * limit;
+        const conditions = {
+            $or: [
+                { fullName: { $regex: search, $options: 'i' } },
+            ],
+            $and: [{ role: UserRole.LESSOR }]
+        };
+        const searchQuery = search ? conditions : { role: UserRole.LESSOR };
+        const totalLessor = await this.userModel.countDocuments(searchQuery)
+        const allLessor = await this.userModel
+            .find(searchQuery)
+            .skip(skipNumber)
+            .limit(limit)
+        const response = {
+            totalLessor,
+            allLessor,
+            currentPage: (page),
+            limit: (limit)
+        }
+        return response
+    }
+    // tích hợp search ở
+    async getAllBlogPostByUserId(userId: number, limit: number = LIMIT_DOCUMENT, page: number = 1, search: string): Promise<any> {
+        const skipNumber = (page - 1) * limit;
+        const conditions = {
+            $or: [
+                { title: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+            ],
+            $and: [
+                { userId }
+            ]
+        };
+        const searchQuery = search ? conditions : { userId };
+        const totalBlog = await this.blogModel.countDocuments(searchQuery)
+        const allBlog = await this.blogModel
+            .find(searchQuery)
+            .skip(skipNumber)
+            .limit(limit)
+        const response = {
+            totalBlog,
+            allBlog,
+            currentPage: (page),
+            limit: (limit)
+        }
+        return response
+    }
+    async getAllFavouriteBlogsByUserId(userId: number, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
+        const skipNumber = (page - 1) * limit;
+        const user = await this.userModel.findById(userId)
+        const allBlog = await this.userModel
+            .find({ _id: userId })
+            .skip(skipNumber)
+            .limit(limit)
+            .populate('blogsFavorite');
+        const response = {
+            totalBlog: user.blogsFavorite.length,
+            allBlog,
+            currentPage: (page),
+            limit: (limit)
+        }
+        return response
+    }
+
+    async checkFavoriteBlog(blogId: string, currentUser: JwtDecode) {
+        const user = await this.userModel.findById(currentUser.id);
+        if (!user) {
+            throw new Error(UserMessage.userNotFound);
+        }
+        const blog = await this.blogModel.findById(blogId);
+        if (!blog) {
+            throw new Error(UserMessage.blogNotFound);
+        }
+        const isFavorite = user.blogsFavorite.some(favoriteBlogId => favoriteBlogId.toString() === blogId.toString());
+        if (isFavorite) {
+            return ResponseHelper.response(
+                HttpStatus.OK,
+                Subject.FAVORITEBLOG,
+                Content.CHECK,
+                true,
+            );
+        } else {
+            return ResponseHelper.response(
+                HttpStatus.OK,
+                Subject.FAVORITEBLOG,
+                Content.CHECK,
+                false,
+            );
+        }
+
+    }
+
+    async getWeeklySignUpCount(currentUser: JwtDecode) {
+        const user = await this.userModel.findById(currentUser.id);
+        if (!AuthGuardUser.isAdmin(user)) {
+            return ResponseHelper.response(
+                HttpStatus.ACCEPTED,
+                Subject.BLOG,
+                Content.NOT_PERMISSION,
+                null,
+            );
+
+        }
+        const startOfWeek = new Date();
+        startOfWeek.setHours(0, 0, 0, 0);
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+        const count = await this.userModel.countDocuments({
+            createdAt: { $gte: startOfWeek, $lt: endOfWeek },
+        });
+
+        return count;
+    }
+
 }

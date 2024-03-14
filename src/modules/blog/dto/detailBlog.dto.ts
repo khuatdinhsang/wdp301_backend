@@ -1,12 +1,11 @@
 /* eslint-disable prettier/prettier */
 import { ApiProperty } from "@nestjs/swagger";
-import { ObjectId } from "mongoose";
 import { CategoryRoom } from "src/enums";
 export class detailBlogDTO {
     @ApiProperty({
         example: '65a8944d9aae07aa4a0ac615',
     })
-    id: ObjectId
+    id: string
 }
 export class getAllDTO {
     @ApiProperty({
@@ -15,9 +14,9 @@ export class getAllDTO {
     category: string
 }
 
-export class preBlogDTO{
+export class preBlogDTO {
 
     @ApiProperty({
     })
-    isAccepted: Boolean
+    isAccepted: boolean
 }

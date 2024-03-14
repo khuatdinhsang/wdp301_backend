@@ -1,10 +1,10 @@
 /* eslint-disable prettier/prettier */
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Prop, Schema, SchemaFactory, raw } from "@nestjs/mongoose";
 import mongoose, { HydratedDocument } from "mongoose";
 import { CategoryRoom, HasTagRoom, RentalObject } from "src/enums";
 
 export type BlogDocument = HydratedDocument<Blog>;
-@Schema()
+@Schema({ timestamps: true })
 export class Blog {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
     userId: string
@@ -32,8 +32,6 @@ export class Blog {
     ward: string
     @Prop()
     addressDetail: string
-    @Prop({ default: 1 })
-    totalRoom: number
     @Prop({ default: 0 })
     totalFavorite: number
     @Prop({ type: String, required: true, default: RentalObject.BOTH })
@@ -42,11 +40,26 @@ export class Blog {
     isAccepted: boolean
     @Prop({ type: Date, required: true })
     expiredTime: Date
-    @Prop({ default: false })
-    isHide: boolean
+    @Prop(raw({
+        hidden: { type: Boolean, default: false },
+        content: String,
+        day: Date
+    }))
+    isHide: Record<string, any>;
     @Prop()
     star: number
+    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
+    Renterconfirm: string[]
+    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
+    Renterid: string[]
     @Prop({ default: false })
     isRented: boolean
+    @Prop({ default: 0 })
+    avgBlogRate: number
+    @Prop({ type: Date, default: Date.now })
+    createdAt: Date;
+
+    // @Prop({ type: Date, default: Date.now })
+    // updatedAt: Date;
 }
 export const BlogSchema = SchemaFactory.createForClass(Blog);

@@ -3,5 +3,6 @@ export enum Field {
     UPDATE = 'update',
     DELETE = 'delete',
     CREATE = 'create',
+    CHECK = 'check',
   }
   

@@ -1,28 +1,35 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString, NotEquals } from "class-validator";
+import { IsArray, IsInt, IsMongoId, IsNotEmpty, IsString, Max, Min, NotEquals, isMongoId } from "class-validator";
 import { ObjectId } from "mongoose";
 import { Content } from "src/enums/content.enum";
 import { Subject } from "src/enums/subject.enum";
 import ResponseHelper from "src/utils/respones.until";
 
 export class createBlogRateDto {
-    @IsNotEmpty({
+    @IsInt({
       message: ResponseHelper.responseDto(
         Subject.FEEDBACK,
-        Content.REQUIRED,
+        Content.INVALID,
         "star"
-      )
-    })
-    @NotEquals(null,{
+        )
+      })
+    @Min(1, {
       message: ResponseHelper.responseDto(
         Subject.FEEDBACK,
-        Content.NOT_NULL,
-        "star"
-      )
-    })
+        Content.MIN_VALUE,
+        "star",
+        )
+      })
+    @Max(5, {
+      message: ResponseHelper.responseDto(
+        Subject.FEEDBACK,
+        Content.MAX_VALUE,
+        "star",
+        )
+      })
     @ApiProperty({
         description: 'điểm đánh giá',
-        default: '0',
+        default: '1',
       })
     star: number;
     
@@ -31,21 +38,28 @@ export class createBlogRateDto {
         description: 'đánh giá',
         default: 'đánh giá 1',
       })
-    feedback: string;
+      title: string;
 
-    @IsNotEmpty()
-    @NotEquals(null)
-    @ApiProperty({
-        description: 'người đánh giá',
-      })
-    UserId: ObjectId;
-
-    @IsNotEmpty()
-    @NotEquals(null)
-    @ApiProperty({
+      @IsNotEmpty()
+      @ApiProperty({
         description: 'bài đăng',
+        example: '65d6237ed678344ce486b08f',
       })
-    BlogId: ObjectId;
+      blogId: string;
+
+      @ApiProperty({
+        example: ["http://img1.jpg", "http://img2.jpg"],
+      })
+      @IsArray()
+      @IsString({ each: true })
+      file: string[];
+}
+export class blogFeedbackDTO{
+  @ApiProperty({
+      description: 'bài đăng',
+      example: '65d6237ed678344ce486b08f',
+    })
+    blogId: string;
 }
 export class updateBlogRateDto {
     @IsNotEmpty()
@@ -61,12 +75,20 @@ export class updateBlogRateDto {
         description: 'đánh giá',
         default: 'đánh giá 1',
       })
-    feedback: string;
+    title: string;
+
+    @ApiProperty({
+      example: ["http://img1.jpg", "http://img2.jpg"],
+    })
+    @IsArray()
+    @IsString({ each: true })
+    file: string[];
+    
 }
 
 export class detailBlogRateDTO {
   @ApiProperty({
-      example: '65a8944d9aae07aa4a0ac615',
+    example: '65a8944d9aae07aa4a0ac615',
   })
-  id: ObjectId
+  id: string
 }

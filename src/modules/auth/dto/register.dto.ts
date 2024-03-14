@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsMobilePhone, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEnum, IsMobilePhone, IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
 import { UserMessage } from 'src/enums';
 import { UserRole } from 'src/enums/role.enum';
 
@@ -10,6 +10,7 @@ export class registerDTO {
     })
     @IsString()
     @IsNotEmpty()
+    @Matches(/^[a-zA-Z\s]+$/, { message: UserMessage.fullnameIsValid })
     fullName: string;
 
     @ApiProperty({

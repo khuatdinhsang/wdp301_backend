@@ -14,6 +14,7 @@ import { UploadService } from './upload.service';
     controllers: [
         UploadController
     ],
-    providers: [UploadService, AuthGuardUser]
+    providers: [UploadService, AuthGuardUser],
+    exports: [UploadService]
 })
 export class UploadModule { }

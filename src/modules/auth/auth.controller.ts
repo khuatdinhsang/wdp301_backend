@@ -1,9 +1,9 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards, Param, Query, HttpException, ParseIntPipe } from "@nestjs/common";
+import { ApiBearerAuth, ApiOkResponse, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { UserMessage } from "src/enums";
-import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword,  registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO } from "./dto";
+import { LoginDTO, editProfileDTO, ResponseRegister, ResponseProfileDetail, ResponseChangePassword, registerDTO, ResponseLogin, refreshTokenDTO, ResponseRefreshToken, ResponseFavoriteBlog, ChangePasswordDTO, ResponseToggleBlockUser } from "./dto";
 import { CurrentUser } from "./decorator/user.decorator";
 import { AuthGuardUser } from "./auth.guard";
 import { JwtDecode } from "./types";
@@ -11,10 +11,13 @@ import { detailBlogDTO } from "../blog/dto";
 import { GoogleAuthGuard } from "./google.guard";
 import { FacebookAuthGuard } from "./facebook.guard";
 import { User } from "./schemas/user.schemas";
+import { Blog } from "../blog/schemas/blog.schemas";
+import { ToggleBlockUserDTO } from "./dto/toggleBlockUser.dto";
 @ApiTags('Auth')
 @Controller("auth")
 export class AuthController {
     constructor(private authService: AuthService) { }
+    // đăng kí bằng số điện thoại
     @Post('register')
     @HttpCode(200)
     @ApiOkResponse({
@@ -22,6 +25,8 @@ export class AuthController {
     })
     async register(@Body() body: registerDTO): Promise<ResponseRegister> {
         const response = new ResponseRegister()
+        console.log("body: ", body);
+        
         try {
             response.setSuccess(HttpStatus.OK, UserMessage.registerSuccess, await this.authService.register(body))
             return response
@@ -30,6 +35,8 @@ export class AuthController {
             return response
         }
     }
+
+    // login bằng sdt và mk
     @Post('login')
     @HttpCode(200)
     @ApiOkResponse({
@@ -45,6 +52,7 @@ export class AuthController {
             return response
         }
     }
+    // refreshtoken bên front-end
     @Post('refreshToken')
     @HttpCode(200)
     @ApiOkResponse({
@@ -60,6 +68,8 @@ export class AuthController {
             return response
         }
     }
+
+    // cho user yêu thích các blog
     @Post('blog/favorite')
     @HttpCode(200)
     @UseGuards(AuthGuardUser)
@@ -67,16 +77,19 @@ export class AuthController {
     @ApiOkResponse({
         type: () => ResponseFavoriteBlog,
     })
-    async favoriteBlog(@Body() body: detailBlogDTO, @CurrentUser() currentUser: JwtDecode): Promise<any> {
-        const response = new ResponseFavoriteBlog()
+    async favoriteBlog(@Body() body: detailBlogDTO, @CurrentUser() currentUser: JwtDecode) {
+        const response = new ResponseFavoriteBlog();
         try {
-            response.setSuccess(HttpStatus.OK, UserMessage.favoriteBlogSuccess, await this.authService.favoriteBlog(body, currentUser))
-            return response
+            const fvrBlog = await this.authService.favoriteBlog({ blogId: body.id }, currentUser);
+            return fvrBlog
         } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message)
-            return response
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+            return response;
         }
+
     }
+
+    // cho user chỉnh sửa thông tin cá nhân
     @Post('editProfile')
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
@@ -88,15 +101,24 @@ export class AuthController {
         const response = new ResponseLogin();
         try {
             const updatedUser = await this.authService.editUserProfile(currentUser.id, body);
-            return response;
+            return updatedUser;
         } catch (error) {
-            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+            if (error.message === UserMessage.phoneExist) {
+                response.setError(HttpStatus.BAD_REQUEST, UserMessage.phoneExist);
+            } else {
+                console.log(error.message);
+
+                response.setError(HttpStatus.INTERNAL_SERVER_ERROR, UserMessage.editUserProfileFail);
+            }
             return response;
         }
     }
+    // login GG
     @Get('google/login')
     @UseGuards(GoogleAuthGuard)
-    async googleAuth() { }
+    async googleAuth(@Req() req) {
+        console.log(req)
+    }
 
     @Get('google/callback')
     @UseGuards(GoogleAuthGuard)
@@ -109,7 +131,7 @@ export class AuthController {
         }
         return response
     }
-
+    // login Facebook
     @Get('facebook/login')
     @UseGuards(FacebookAuthGuard)
     async facebookAuth() { }
@@ -126,14 +148,13 @@ export class AuthController {
         return response
     }
 
-    // làm tiếp  getDetailUser,editUser, changePassword
-    // getALLUsers --> admin có quyền truy cập, những role khác k có quyền 
-    @UseGuards(AuthGuardUser)
+    // view profile, người khác cũng có thể xem được trang cá nhân của mình
+
     @ApiBearerAuth('JWT-auth')
+    @UseGuards(AuthGuardUser)
     @Get('profile')
     async profileDetail(@CurrentUser() currentUser: JwtDecode): Promise<ResponseProfileDetail> {
         const response = new ResponseProfileDetail();
-
         try {
             const userProfile = await this.authService.profileDetail(currentUser.id);
             response.setSuccess(HttpStatus.OK, UserMessage.profileDetailSuccess, userProfile);
@@ -143,38 +164,201 @@ export class AuthController {
 
         return response;
     }
-
+    // user thay đổi mật khẩu
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
     @Post('changePassword')
-    async changePassword(@CurrentUser() currentUser: JwtDecode, @Body() changePasswordDto: ChangePasswordDTO): Promise<ResponseChangePassword> {
+    async changePassword(
+        @CurrentUser() currentUser: JwtDecode,
+        @Body() changePasswordDto: ChangePasswordDTO
+    ): Promise<ResponseChangePassword> {
         try {
-            const success = await this.authService.changePassword(currentUser.id, changePasswordDto);
-            if (!success) {
-                const response: ResponseChangePassword = new ResponseChangePassword();
-                response.setError(HttpStatus.BAD_REQUEST, UserMessage.changePasswordFail);
-                return response;
-            }
+            const result = await this.authService.changePassword(currentUser.id, changePasswordDto);
 
             const response: ResponseChangePassword = new ResponseChangePassword();
             response.isSuccess = true;
             response.statusCode = HttpStatus.OK;
-            response.message = UserMessage.changePasswordSuccess;
+            response.message = result.message;
+            // Kiểm tra nếu có user được trả về từ service, thêm user vào response
+            if (result.user) {
+                response.user = result.user;
+            }
             return response;
         } catch (error) {
-            console.error(error);
-            throw new Error(UserMessage.changePasswordFail);
+            const response: ResponseChangePassword = new ResponseChangePassword();
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, UserMessage.changePasswordFail);
+            return response;
         }
     }
 
+
+    // get All role rented bởi admin
     @UseGuards(AuthGuardUser)
     @ApiBearerAuth('JWT-auth')
-    @Get('getAllRenter')
-    async getAllRenters(@CurrentUser() currentUser: JwtDecode): Promise<User[]> {
-        const isAdmin = currentUser.role === 'admin';
-        if (!isAdmin) {
-            throw new Error(UserMessage.isNotAdmin)
+    @Get('/getAllRenter')
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
+    @ApiQuery({ name: 'search', required: false })
+    async getAllRenters(@CurrentUser() currentUser: JwtDecode,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+        @Query('page', new ParseIntPipe({ optional: true })) page: number,
+        @Query('search') search?: string,
+    ): Promise<User[]> {
+        try {
+            const isAdmin = currentUser.role === 'admin';
+            if (!isAdmin) {
+                throw new Error(UserMessage.isNotAdmin);
+            }
+
+            const renters = await this.authService.getAllRenters(limit, page, search);
+            return renters;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return this.authService.getAllRenters();
+    }
+
+    // get tất cả người dùng (renter, lessor) bởi admin
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
+    @ApiQuery({ name: 'search', required: false })
+    @Get('/getAllUsers')
+    async getAllUsers(@CurrentUser() currentUser: JwtDecode,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+        @Query('page', new ParseIntPipe({ optional: true })) page: number,
+        @Query('search') search?: string,
+    ): Promise<User[]> {
+        try {
+            const isAdmin = currentUser.role === 'admin';
+            if (!isAdmin) {
+                throw new Error(UserMessage.isNotAdmin);
+            }
+
+            const renters = await this.authService.getAllUsers(limit, page, search);
+            return renters;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    // block user by admin ---> chưa xong 
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Post(':userId/toggleBlock')
+    async toggleBlockUser(@Param('userId') userId: string, @Body() dto: ToggleBlockUserDTO): Promise<ResponseToggleBlockUser> {
+        const response = new ResponseToggleBlockUser();
+        try {
+            const { blockReason } = dto;
+            const result = await this.authService.toggleBlockUser(userId, blockReason);
+            if ('status' in result) {
+                response.setError(result.status, result.message);
+            } else {
+                response.isSuccess = true;
+                response.statusCode = HttpStatus.OK;
+                response.message = UserMessage.toggleBlockUserSuccessfully;
+                response.user = result;
+            }
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+        }
+
+        return response;
+    }
+
+    // get all Lessor by admin 
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('/getAllLessors')
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
+    @ApiQuery({ name: 'search', required: false })
+    async getAllLessors(@CurrentUser() currentUser: JwtDecode,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+        @Query('page', new ParseIntPipe({ optional: true })) page: number,
+        @Query('search') search?: string,
+
+    ): Promise<User[]> {
+        try {
+            const isAdmin = currentUser.role === 'admin';
+            if (!isAdmin) {
+                throw new Error(UserMessage.isNotAdmin);
+            }
+            const renters = await this.authService.getAllLessors(limit, page, search);
+            return renters;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // lấy tất cả các bài đăng của user 
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
+    @ApiQuery({ name: 'search', required: false })
+    @Get('/getAllBlogsPost')
+    async getAllBlogPostByUser(@CurrentUser() currentUser: JwtDecode,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+        @Query('page', new ParseIntPipe({ optional: true })) page: number,
+        @Query('search') search?: string,
+    ): Promise<Blog[]> {
+        try {
+            const blogPosts = await this.authService.getAllBlogPostByUserId(currentUser.id, limit, page, search);
+            return blogPosts;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    // lấy tất cả các bài viết yêu thích của user
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @ApiQuery({ name: 'limit', required: false })
+    @ApiQuery({ name: 'page', required: false })
+    @Get('/getAllFavoriteBlogs')
+    async getAllFavouriteBlogsByUser(
+        @CurrentUser() currentUser: JwtDecode,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
+        @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    ): Promise<Blog[]> {
+        try {
+            const favoriteBlog = await this.authService.getAllFavouriteBlogsByUserId(currentUser.id, limit, page);
+            return favoriteBlog;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // lấy thông tin của user khác 
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    @Get('/getProfileUserOther/:userId')
+    async getProfileUserOther(
+        @Param('userId') userId: string,
+    ): Promise<ResponseProfileDetail> {
+        const response = new ResponseProfileDetail();
+        try {
+            const userProfile = await this.authService.getProfileUserOther(userId);
+            response.setSuccess(HttpStatus.OK, UserMessage.profileDetailSuccess, userProfile);
+        } catch (error) {
+            response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+        }
+        return response;
+    }
+
+    @Get('CheckFavoutireBlog/:blogid')
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    getFilteredBlogs(@Param('blogid') blogId: string, @CurrentUser() currentUser: JwtDecode,) {
+      return this.authService.checkFavoriteBlog(blogId, currentUser);
+    }
+
+    @Get('weekly-sign-up-count')
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    async getWeeklySignUpCount(@CurrentUser() currentUser: JwtDecode) {
+      const weekSignUpCount = await this.authService.getWeeklySignUpCount(currentUser);
+      return { weekSignUpCount };
     }
 }
