@@ -743,4 +743,20 @@ export class BlogService {
     );
   }
 
+  async findAllConfirmWaitingBlog(currentUser: JwtDecode) {
+
+    const user = await this.userModel.findById(currentUser.id);
+    const userId = user._id;
+    if (!AuthGuardUser.isLessor(user)) {
+      return ResponseHelper.response(
+        HttpStatus.ACCEPTED,
+        Subject.BLOG,
+        Content.NOT_PERMISSION,
+        null,
+      );
+
+    }
+    return this.blogModel.find({ userId, Renterconfirm: { $exists: true, $ne: [] } }).exec();
+  }
+
 }
