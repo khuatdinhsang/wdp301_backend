@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Delete,
   HttpCode,
   HttpStatus,
   Param,
@@ -125,16 +126,18 @@ export class BlogController {
   })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'title', required: false }) 
   async getAllAcceptBlogAdmin(
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
     @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    @Query('title') title?: string, 
   ): Promise<ResponseBlog> {
     const response = new ResponseBlog();
     try {
       response.setSuccess(
         HttpStatus.OK,
         BlogMessage.allBlogSuccess,
-        await this.blogService.getAllAcceptBlogAdmin(limit, page),
+        await this.blogService.getAllAcceptBlogAdmin(limit, page, title), // Truyền title vào service
       );
       return response;
     } catch (error) {
@@ -153,17 +156,19 @@ export class BlogController {
   })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'title', required: false }) 
   async getAllUnacceptBlogAdmin(
     @CurrentUser() currentUser: JwtDecode,
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
     @Query('page', new ParseIntPipe({ optional: true })) page: number,
+    @Query('title') title?: string, 
   ): Promise<ResponseBlog> {
     const response = new ResponseBlog();
     try {
       response.setSuccess(
         HttpStatus.OK,
         BlogMessage.allBlogSuccess,
-        await this.blogService.getAllUnacceptBlogAdmin(currentUser, limit, page),
+        await this.blogService.getAllUnacceptBlogAdmin(currentUser, limit, page, title),
       );
       return response;
     } catch (error) {
@@ -171,7 +176,6 @@ export class BlogController {
       return response;
     }
   }
-
   // lấy tất cả các blog đã thuê
   @Get('getAllRented/admin')
   @ApiBearerAuth('JWT-auth')
@@ -564,6 +568,7 @@ export class BlogController {
     }
   }
 
+  // lấy ra phòng trụ trọ đã đăng 
   @Get('GetRoomLessorRentOut')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
@@ -580,6 +585,24 @@ export class BlogController {
       return response;
     }
   }
+
+    // lấy ra phòng trụ trọ đã đăng 
+    @Get('GetRoomRenterPost')
+    @UseGuards(AuthGuardUser)
+    @ApiBearerAuth('JWT-auth')
+    async GetRoomRenterPost(
+      @CurrentUser() currentUser: JwtDecode,
+    ) {
+      const response = new ResponseBlog();
+      try {
+        const result = await this.blogService.GetRoomRenterPost(currentUser)
+        return result;
+      }
+      catch (error) {
+        response.setError(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+        return response;
+      }
+    }
 
   // lấy ra phòng đã thuê của chủ trọ
   @Get('GetRentedRoomLessorRentOut')
@@ -599,7 +622,7 @@ export class BlogController {
     }
   }
 
-  //lấy ra phòng chưa cho thuê của chủ trọ
+  //lấy ra phòng chưa cho thuê và cũng chưa có người đk thuê của chủ trọ
   @Get('GetUnrentedRoomLessorRentOut')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
@@ -618,7 +641,7 @@ export class BlogController {
   }
 
   // tìm bạn cùng phòng
-  @Get('GetRoomate')
+  @Get('GetRoomate/:blogid')
   @UseGuards(AuthGuardUser)
   @ApiBearerAuth('JWT-auth')
   async getRoomate(
@@ -652,6 +675,22 @@ export class BlogController {
   async getWeeklyPostCount(@CurrentUser() currentUser: JwtDecode) {
     const weekPostCount = await this.blogService.getWeeklyPostCount(currentUser);
     return { weekPostCount };
+  }
+
+  @Delete('dleteBlog/:blogId')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  async deleteBlog(@Param('blogId') blogId: string) {
+    const result = await this.blogService.deleteBlog(blogId);
+    return result;
+  }
+
+  // tìm các phòng đang chờ xác nhận cho thuê
+  @Get('findAllConfirmWaitingBlog/:userId')
+  @UseGuards(AuthGuardUser)
+  @ApiBearerAuth('JWT-auth')
+  async findAllConfirmWaitingBlog(@CurrentUser() currentUser: JwtDecode) {
+    return this.blogService.findAllConfirmWaitingBlog(currentUser);
   }
 
 }
