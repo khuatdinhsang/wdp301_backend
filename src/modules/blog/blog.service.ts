@@ -60,9 +60,9 @@ export class BlogService {
   }
   async getAllBlogAccepted(category: getAllDTO, limit: number = LIMIT_DOCUMENT, page: number = 1): Promise<any> {
     const skipNumber = (page - 1) * limit;
-    const totalBlog = await this.blogModel.countDocuments({ category, isAccepted: true, 'isHide.hidden': false, isRented: false })
+    const totalBlog = await this.blogModel.countDocuments({ category, isAccepted: true, 'isHide.hidden': false })
     const allBlog = await this.blogModel
-      .find({ category, isAccepted: true, 'isHide.hidden': false, isRented: false })
+      .find({ category, isAccepted: true, 'isHide.hidden': false })
       .skip(skipNumber)
       .limit(limit)
     const response = {
@@ -136,7 +136,8 @@ export class BlogService {
     const allBlog = await this.blogModel
       .find(query)
       .skip(skipNumber)
-      .limit(limit);
+      .limit(limit)
+      .populate('userId', '_id fullName avatar')
 
     const totalBlog = await this.blogModel.countDocuments(query);
 
@@ -166,6 +167,7 @@ export class BlogService {
       .find({ isAccepted: false })
       .skip(skipNumber)
       .limit(limit)
+      .populate('userId', '_id fullName avatar')
     const response = {
       totalBlog: totalBlog,
       allBlog: allBlog,
@@ -757,11 +759,11 @@ export class BlogService {
 
     }
     const blog = this.blogModel.find({ userId, isRented: false, Renterconfirm: { $exists: true, $ne: [] } })
-    .populate({
-      path: 'Renterconfirm',
-      model: 'User',
-    })
-    .exec();
+      .populate({
+        path: 'Renterconfirm',
+        model: 'User',
+      })
+      .exec();
     return blog
   }
 

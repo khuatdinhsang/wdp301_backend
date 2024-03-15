@@ -6,7 +6,7 @@ import { UserRole } from "src/enums/role.enum";
 import { Blog } from "src/modules/blog/schemas/blog.schemas";
 
 export type AccountDocument = HydratedDocument<User>;
-@Schema()
+@Schema({ timestamps: true })
 export class User {
     @Prop()
     fullName: string
