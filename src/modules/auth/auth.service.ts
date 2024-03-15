@@ -187,7 +187,7 @@ export class AuthService {
             }
     
             const updatedUser = await user.save();
-    
+
             if (data.avatar) {
                 const result = await this.blogRateModel.updateOne(
                     { userId: userId },
@@ -195,7 +195,7 @@ export class AuthService {
                 );
                 console.log(result);
             }
-    
+
             return { status: 200, message: UserMessage.editProfileSuccess, user: updatedUser.toObject() };
         } catch (error) {
             return { status: 500, message: 'Internal Server Error' };
