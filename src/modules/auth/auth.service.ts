@@ -15,11 +15,13 @@ import { Subject } from 'src/enums/subject.enum';
 import { Content } from 'src/enums/content.enum';
 import { LIMIT_DOCUMENT } from 'src/contants';
 import { AuthGuardUser } from './auth.guard';
+import { Blog_Rate } from '../feedback/schema/blog-rate.schemas';
 @Injectable({})
 export class AuthService {
     constructor(
         @InjectModel(User.name) private userModel: Model<User>,
         @InjectModel(Blog.name) private blogModel: Model<Blog>,
+        @InjectModel(Blog_Rate.name) private blogRateModel: Model<Blog_Rate>,
         private jwtService: JwtService,
 
     ) { }
@@ -188,6 +190,14 @@ export class AuthService {
             user.gender = data.gender || user.gender;
 
             const updatedUser = await user.save();
+            if (data.avatar) {
+                const result = await this.blogRateModel.updateOne(
+                    { userId: userId },
+                    { $set: { avt: data.avatar } }
+                );
+                console.log(result);
+            }
+
 
             return { status: 200, message: UserMessage.editProfileSuccess, user: updatedUser.toObject() };
         } catch (error) {
@@ -218,7 +228,7 @@ export class AuthService {
             console.error(error);
         }
     }
-    async changePassword(userId: number, data: ChangePasswordDTO):  Promise<ResponseChangePassword> {
+    async changePassword(userId: number, data: ChangePasswordDTO): Promise<ResponseChangePassword> {
         try {
             const { currentPassword, newPassword } = data;
             const user = await this.userModel.findById(userId);
@@ -231,7 +241,7 @@ export class AuthService {
                 response.statusCode = HttpStatus.BAD_REQUEST;
                 response.message = UserMessage.passwordInValid;
                 console.log("rés,", response);
-                
+
                 return response;
             }
 
@@ -240,16 +250,16 @@ export class AuthService {
             await user.save();
 
             const response: ResponseChangePassword = new ResponseChangePassword();
-                response.isSuccess = true;
-                response.statusCode = HttpStatus.OK;
-                response.message = UserMessage.changePasswordSuccess;
-                return response;
+            response.isSuccess = true;
+            response.statusCode = HttpStatus.OK;
+            response.message = UserMessage.changePasswordSuccess;
+            return response;
         } catch (error) {
             const response: ResponseChangePassword = new ResponseChangePassword();
-                response.isSuccess = false;
-                response.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-                response.message = UserMessage.changePasswordFail;
-                return response;
+            response.isSuccess = false;
+            response.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+            response.message = UserMessage.changePasswordFail;
+            return response;
         }
     }
 
