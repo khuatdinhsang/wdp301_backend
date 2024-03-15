@@ -583,7 +583,7 @@ export class BlogService {
         ],
       })
       .exec();;
-    if (!AuthGuardUser.isLessor(user)) {
+    if (!AuthGuardUser.isLessor(user) && !AuthGuardUser.isRenter(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,
@@ -620,7 +620,7 @@ export class BlogService {
 
       })
       .exec();;
-    if (!AuthGuardUser.isLessor(user)) {
+    if (!AuthGuardUser.isLessor(user) && !AuthGuardUser.isRenter(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,
@@ -749,7 +749,7 @@ export class BlogService {
 
     const user = await this.userModel.findById(currentUser.id);
     const userId = user._id;
-    if (!AuthGuardUser.isLessor(user)) {
+    if (!AuthGuardUser.isLessor(user)&& !AuthGuardUser.isRenter(user)) {
       return ResponseHelper.response(
         HttpStatus.ACCEPTED,
         Subject.BLOG,
