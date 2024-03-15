@@ -25,12 +25,23 @@ export class BlogRateService {
     async create(data: createBlogRateDto, currentUser: JwtDecode) {
         const blogId = data.blogId;
         const user = await this.userModel.findById(currentUser.id);
-        const userFeedback = await this.blogModel.findOne({ 
+        const userFeedback = await this.blogModel.findOne({
             $and: [
-            { _id: blogId },
-            { Renterid: currentUser.id }
-          ] })
-        if(!userFeedback){
+                {
+                    $or: [
+                        { _id: blogId },
+                        { userId: currentUser.id }
+                    ]
+                },
+                {
+                    $or: [
+                        { Renterid: currentUser.id },
+                        { _id: blogId }
+                    ]
+                }
+            ]
+        })
+        if (!userFeedback) {
             return ResponseHelper.response(
                 HttpStatus.ACCEPTED,
                 Subject.FEEDBACK,
