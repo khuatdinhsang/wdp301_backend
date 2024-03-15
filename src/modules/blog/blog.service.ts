@@ -136,7 +136,8 @@ export class BlogService {
     const allBlog = await this.blogModel
       .find(query)
       .skip(skipNumber)
-      .limit(limit);
+      .limit(limit)
+      .populate('userId', '_id fullName avatar')
 
     const totalBlog = await this.blogModel.countDocuments(query);
 
@@ -166,6 +167,7 @@ export class BlogService {
       .find({ isAccepted: false })
       .skip(skipNumber)
       .limit(limit)
+      .populate('userId', '_id fullName avatar')
     const response = {
       totalBlog: totalBlog,
       allBlog: allBlog,
@@ -757,11 +759,11 @@ export class BlogService {
 
     }
     const blog = this.blogModel.find({ userId, isRented: false, Renterconfirm: { $exists: true, $ne: [] } })
-    .populate({
-      path: 'Renterconfirm',
-      model: 'User',
-    })
-    .exec();
+      .populate({
+        path: 'Renterconfirm',
+        model: 'User',
+      })
+      .exec();
     return blog
   }
 

@@ -12,6 +12,9 @@ import { FeedbackModule } from './modules/feedback/feedback.modules';
 import { CommentModule } from './modules/comment/comment.module';
 import { TransactionModule } from './modules/transaction/transaction.module';
 // import { CorsModule } from '@nestjs/common';
+import { AppGateway } from './app/app.gateway';
+import { MessageModule } from './modules/message/message.module';
+import { RoomModule } from './modules/room/room.module';
 @Module({
   imports: [ConfigModule.forRoot({
     envFilePath: '.env',
@@ -31,9 +34,11 @@ import { TransactionModule } from './modules/transaction/transaction.module';
     SmsModule,
     FeedbackModule,
     CommentModule,
-    TransactionModule
+    TransactionModule,
+    MessageModule,
+    RoomModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AppGateway],
 })
 export class AppModule { }

@@ -27,5 +27,6 @@ import { FacebookStrategy } from './facebook.strategy';
         AuthController
     ],
     providers: [AuthService, AuthGuardUser, GoogleStrategy, FacebookStrategy],
+    exports: [AuthService]
 })
 export class AuthModule { }

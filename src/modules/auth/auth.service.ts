@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
@@ -70,6 +70,21 @@ export class AuthService {
         const tokens = await this.getTokens(payload)
         await this.userModel.findByIdAndUpdate(userExist._id, { $set: { refreshToken: tokens.refreshToken } }, { new: true })
         return tokens
+    }
+    async handleVerifyToken(token: string) {
+        try {
+            const payload = this.jwtService.verify(token); // this.configService.get('SECRETKEY')
+            return payload
+        } catch (e) {
+            throw new HttpException(
+                {
+                    key: '',
+                    data: {},
+                    statusCode: HttpStatus.UNAUTHORIZED,
+                },
+                HttpStatus.UNAUTHORIZED,
+            );
+        }
     }
     async refreshToken(data: refreshTokenDTO): Promise<Tokens> {
         const payload = Jwt.getPayloadToken(data.refreshToken);
