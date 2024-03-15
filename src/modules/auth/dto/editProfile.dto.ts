@@ -19,21 +19,10 @@
     @IsOptional()
     avatar?: string;
 
-    // @ApiProperty({ example: '1990-01-01', description: 'Date of birth of the user' })
-    // @IsOptional()
-    // @IsDate()
-    // dateOfBirth?: Date;
-
     @ApiProperty({ example: true, description: 'Gender of the user (true for male, false for female)' })
     @IsOptional()
     @IsBoolean()
     gender?: boolean;
-
-    @ApiProperty({ example: '0356012194', description: 'Phone number of the user' })
-    @IsString()
-    @IsNotEmpty()
-    @IsMobilePhone('vi-VN', null, { message: UserMessage.phoneInValid })
-    phone: string;
 
     @ApiProperty({ example: '123 Main St', description: 'Address of the user' })
     @IsOptional()

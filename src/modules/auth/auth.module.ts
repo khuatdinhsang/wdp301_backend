@@ -10,11 +10,12 @@ import { Blog, BlogSchema } from '../blog/schemas/blog.schemas';
 import { PassportModule } from '@nestjs/passport';
 import { GoogleStrategy } from './google.strategy';
 import { FacebookStrategy } from './facebook.strategy';
+import { BlogRateSchema, Blog_Rate } from '../feedback/schema/blog-rate.schemas';
 
 @Module({
     imports: [
         MongooseModule.forFeature([{ name: User.name, schema: UserSchema },
-        { name: Blog.name, schema: BlogSchema }]),
+        { name: Blog.name, schema: BlogSchema }, { name: Blog_Rate.name, schema: BlogRateSchema }]),
         JwtModule.register({
             global: true,
         }),

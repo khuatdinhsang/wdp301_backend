@@ -15,11 +15,13 @@ import { Subject } from 'src/enums/subject.enum';
 import { Content } from 'src/enums/content.enum';
 import { LIMIT_DOCUMENT } from 'src/contants';
 import { AuthGuardUser } from './auth.guard';
+import { Blog_Rate } from '../feedback/schema/blog-rate.schemas';
 @Injectable({})
 export class AuthService {
     constructor(
         @InjectModel(User.name) private userModel: Model<User>,
         @InjectModel(Blog.name) private blogModel: Model<Blog>,
+        @InjectModel(Blog_Rate.name) private blogRateModel: Model<Blog_Rate>,
         private jwtService: JwtService,
 
     ) { }
@@ -162,38 +164,44 @@ export class AuthService {
     async editUserProfile(userId: number, data: editProfileDTO): Promise<{ status: number, message: string, user?: User }> {
         try {
             const user = await this.userModel.findById(userId);
-
+    
             if (!user) {
                 return { status: 404, message: UserMessage.userNotFound };
             }
-
-            if (data.phone && data.phone !== user.phone) {
-                const existingUserWithPhone = await this.userModel.findOne({ phone: data.phone });
-
-                if (existingUserWithPhone) {
-                    return { status: 400, message: UserMessage.phoneExist };
-                }
-            }
+    
             if (data.email && data.email !== user.email) {
                 const existingUserWithEmail = await this.userModel.findOne({ email: data.email });
-
+    
                 if (existingUserWithEmail) {
                     return { status: 400, message: UserMessage.emailExist };
                 }
             }
+    
             user.fullName = data.fullName || user.fullName;
             user.email = data.email || user.email;
             user.avatar = data.avatar || user.avatar;
             user.address = data.address || user.address;
-            user.gender = data.gender || user.gender;
-
+    
+            if (data.gender !== undefined) {
+                user.gender = data.gender;
+            }
+    
             const updatedUser = await user.save();
-
+    
+            if (data.avatar) {
+                const result = await this.blogRateModel.updateOne(
+                    { userId: userId },
+                    { $set: { avt: data.avatar } }
+                );
+                console.log(result);
+            }
+    
             return { status: 200, message: UserMessage.editProfileSuccess, user: updatedUser.toObject() };
         } catch (error) {
             return { status: 500, message: 'Internal Server Error' };
         }
     }
+    
 
 
     async profileDetail(userId: number): Promise<User> {
@@ -218,7 +226,7 @@ export class AuthService {
             console.error(error);
         }
     }
-    async changePassword(userId: number, data: ChangePasswordDTO):  Promise<ResponseChangePassword> {
+    async changePassword(userId: number, data: ChangePasswordDTO): Promise<ResponseChangePassword> {
         try {
             const { currentPassword, newPassword } = data;
             const user = await this.userModel.findById(userId);
@@ -231,7 +239,7 @@ export class AuthService {
                 response.statusCode = HttpStatus.BAD_REQUEST;
                 response.message = UserMessage.passwordInValid;
                 console.log("rés,", response);
-                
+
                 return response;
             }
 
@@ -240,16 +248,16 @@ export class AuthService {
             await user.save();
 
             const response: ResponseChangePassword = new ResponseChangePassword();
-                response.isSuccess = true;
-                response.statusCode = HttpStatus.OK;
-                response.message = UserMessage.changePasswordSuccess;
-                return response;
+            response.isSuccess = true;
+            response.statusCode = HttpStatus.OK;
+            response.message = UserMessage.changePasswordSuccess;
+            return response;
         } catch (error) {
             const response: ResponseChangePassword = new ResponseChangePassword();
-                response.isSuccess = false;
-                response.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-                response.message = UserMessage.changePasswordFail;
-                return response;
+            response.isSuccess = false;
+            response.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+            response.message = UserMessage.changePasswordFail;
+            return response;
         }
     }
 
