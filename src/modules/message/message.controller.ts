@@ -26,7 +26,6 @@ export class MessageController {
     ): Promise<any> {
         try {
             const data = await this.messageService.getAllMessage(receiver_id, currentUser, limit, page);
-            console.log("da", data)
             return data
         } catch (error) {
             console.log("error", error)

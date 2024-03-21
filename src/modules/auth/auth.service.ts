@@ -68,7 +68,7 @@ export class AuthService {
                 UserMessage.passwordInValid
             )
         }
-        const payload = { id: userExist._id.toString(), fullName: userExist.fullName, role: userExist.role };
+        const payload = { id: userExist._id.toString(), fullName: userExist.fullName, role: userExist.role, avatar: userExist?.avatar };
         const tokens = await this.getTokens(payload)
         await this.userModel.findByIdAndUpdate(userExist._id, { $set: { refreshToken: tokens.refreshToken } }, { new: true })
         return tokens

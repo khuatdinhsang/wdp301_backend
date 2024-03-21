@@ -20,7 +20,6 @@ export class RoomController {
     async getAllChatRoom(@CurrentUser() currentUser: JwtDecode): Promise<any> {
         try {
             const data = await this.roomService.getAllChatRoom(currentUser);
-            console.log("da", data)
             return data
         } catch (error) {
             console.log("error", error)
@@ -36,7 +35,6 @@ export class RoomController {
     ): Promise<any> {
         try {
             const data = await this.roomService.getOneChatRoom(id);
-            console.log("da", data)
             return data
         } catch (error) {
             console.log("error", error)
@@ -52,7 +50,6 @@ export class RoomController {
     ): Promise<any> {
         try {
             const data = await this.roomService.createChatRoom(payload);
-            console.log("da", data)
             return data
         } catch (error) {
             console.log("error", error)
